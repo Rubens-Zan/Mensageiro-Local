@@ -56,12 +56,12 @@ void state_init(tCliente *client){
     // :send x<enter>: Envia arquivo x.
     char buffer_c[100];
     char *filename_c;
-    char char_code; 
+    wint_t char_code; 
 
     while (1){
         
         printf("Digite o comando\n");
-        char_code = getch();
+        char_code = get_wch();
         if (char_code == 'i'){
             printf("INSERT\n");
             client->estado = CRIACAO_MENSAGEM;
@@ -71,7 +71,7 @@ void state_init(tCliente *client){
 
             scanf("%63[^\n]", buffer_c);
             getchar();
-
+                        
             printf("COMANDO %s\n", buffer_c); 
 
             if (strncmp(buffer_c, "q",1) == 0){
