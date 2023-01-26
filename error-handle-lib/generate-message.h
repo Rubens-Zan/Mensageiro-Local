@@ -43,6 +43,6 @@ typedef struct msgT
 
 bit calculaParidade(bit *conteudo,unsigned int tam); 
 bit * trellisEncode(bit *originalMessage, unsigned int size); 
-msgT *initMessage(bit *originalMessage, unsigned int size); 
+msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType); 
 
 #endif

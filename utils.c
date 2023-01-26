@@ -2,12 +2,33 @@
 #include "cliente.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <string.h>
 #include <unistd.h>
+#include <conio.h>
 
 #define ESC 27
 #define ENTER 13
+
+bit *convertToBin(unsigned int num, unsigned int bitsSize){
+    bit *convertedNumb = (bit *) malloc ((bitsSize+1) * sizeof(bit));
+    int a[10],n,i,j;  
+    n = num; 
+    j=0;
+    for (unsigned int i=0;i<bitsSize;++i){
+        a[i] = 0;
+    }
+    convertedNumb[bitsSize] = '\0'; 
+    for(i=0;n>0;i++){    
+        a[i]=n%2;    
+        n=n/2;    
+    }    
+    for(i=bitsSize-1;i >=0;i--)    
+    {    
+        convertedNumb[j] = a[i] + '0';
+        ++j;    
+    }    
+    return convertedNumb; 
+}
 
 char *append( char *str, unsigned int shifQt)
 {
@@ -22,37 +43,19 @@ char *append( char *str, unsigned int shifQt)
     return str;
 }
 
-bit * printstringasbinary(unsigned int* s, unsigned int tam)
+bit * getStringAsBinary(unsigned int* s, unsigned int tam)
 {
     // A small 9 characters buffer we use to perform the conversion
     unsigned char output[9];
     unsigned int curPos = 0;
     bit *myBinaryMessage = (bit *)malloc((8 * tam) * sizeof(bit)); 
-    // Until the first character pointed by s is not a null character
-    // that indicates end of string...
-    while (*s)
-    {
-        itoa(*s, output, 2); 
-        // TODO: ADD FUNCTION TO CONVERT THE UNSIGNED INT TO BINARY INSTEAD 
-        // itoa nao funciona em unix
-        
-        // transforma caracteres de 6 ou 7 bits em 8, adicionando padding de 0,para transformar em utf-8
-        int paddBits = 8 - strlen(output);
-        if(paddBits > 0){
-            strcpy(output,append(output,paddBits)); 
-        }
-        printf("%s\n ",output);
-        strncpy(output, &myBinaryMessage[curPos], 8);
+    for (unsigned int i=0;i < tam;++i){
+        bit* myConvertedNumb = convertToBin(s[i], 8);
+        strncpy(&myBinaryMessage[curPos], myConvertedNumb, 8);
         curPos+=8;
-        // TODO: DEPOIS DA CONVERSAO DE DECIMAL PARA BINARIO VERIFICAR A COPIA 
-        printf("curPos %s %d %s\n",output,curPos,myBinaryMessage);
-        // myBinaryMessage[curPos]='\0'; 
-        ++s;
     }
-    printf("\nMENSAGEM BIN: ");
-    for (int i=0;i < 8 * tam;++i){
-        printf("%c",myBinaryMessage[i]);
-    }
+
+    // printf("binaria: %s\n", myBinaryMessage);
     return myBinaryMessage;
 }
 
@@ -79,11 +82,9 @@ void state_init(tCliente *client){
             return;
         }else if (char_code == ':') {
             printf(":"); 
-
             scanf("%63[^\n]", buffer_c);
             getchar();
-
-            printf("COMANDO %s\n", buffer_c); 
+            // printf("COMANDO %s\n", buffer_c);
 
             if (strncmp(buffer_c, "q",1) == 0){
                 printf("QUITE\n");
@@ -95,9 +96,9 @@ void state_init(tCliente *client){
                 client->estado = ENVIA_ARQUIVO;
                 client->fileName = filename_c; 
                 return;
-            
             }
-            
+        }else{
+            printf("COMANDO INVALIDO \n");
         }
 
     }
@@ -110,11 +111,9 @@ void state_create_message(tCliente *client){
     unsigned int currentBufferPosition = 0;
 
     while (1){
-        printf("\n state_create_message");
         char_code = getch();
         // <esc>: Sai do modo de inserção de uma mensagem.
         if ( (int)(char_code) == ESC){
-            printf("INSERT\n");
             client->estado = INICIO;
             return;
         }else if((int)(char_code) == ENTER) {
@@ -124,16 +123,17 @@ void state_create_message(tCliente *client){
                 printf("%d ", buffer_c[i]); 
                 
             printf("\n"); 
-            bit *myBinaryMsg = printstringasbinary(buffer_c, currentBufferPosition); 
-            client->message = initMessage(myBinaryMsg,currentBufferPosition);
+            bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition); 
+            client->message = initMessage(myBinaryMsg,currentBufferPosition*8, TEXTO);
+
+            printf("%s",client->message->dados);
             return;
         }else {
             buffer_c[currentBufferPosition] = char_code; 
-            printf("msg %c    \n", buffer_c[currentBufferPosition]); 
+            printf("%c", buffer_c[currentBufferPosition]); 
             ++currentBufferPosition; 
             buffer_c[currentBufferPosition]= '\0'; 
         }
-        printf("--%d--", char_code);
 
     }
 }

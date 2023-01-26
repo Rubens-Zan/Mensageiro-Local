@@ -2,6 +2,7 @@
 #include "error-handle.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /** TRELLIS ENCODING **/
 void trellisShift(bit *trellis, bit newBit){
@@ -51,10 +52,12 @@ bit calculaParidade(bit *conteudo,unsigned int tam){
     return aux;
 }
 
-msgT *initMessage(bit *originalMessage, unsigned int size){
+// TODO : AJUSTAR PARA CONVERTER PARA BINARIO O TAMANHO
+msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType){
     msgT *message = (msgT *)malloc(sizeof(msgT));
     message->dados = trellisEncode(originalMessage, size); 
-    message->tam_msg = size; 
+    // strcpy(message->tipo, msgType); 
+    // message->tam_msg = size * 2; // duplica por causa da modulacao da trelica 
     message->paridade = calculaParidade(message->dados, size);
     return message; 
 }
