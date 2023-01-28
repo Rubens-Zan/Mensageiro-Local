@@ -11,20 +11,20 @@ typedef enum {
 } typesState;
 
 typedef enum {
-    TEXTO=0x01,
-    MIDIA=0x10,
-    ACK=0x0A,
-    NACK=0x00,
-    ERRO=0x1E,
-    INIT=0x1D,
-    END=0x0F,
-    DADOS=0x0D
+    TEXTO=000001, //0x01
+    MIDIA=100000, //0x10,
+    ACK=001010, //0x0A,
+    NACK=000000, //0x00,
+    ERRO=011110, //0x1E,
+    INIT=011101, //0x1D,
+    END=001111, //0x0F,
+    DADOS=001101 //0x0D
 } typesMessage; 
 
+// nack: 0x00
 // exto: 0x01
 // mídia: 0x10
 // ack: 0x0A
-// nack: 0x00
 // erro: 0x1E
 // inicio de transmissão: 0x1D
 // fim de transmissão: 0x0F

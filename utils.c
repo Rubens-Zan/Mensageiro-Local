@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "cliente.h"
+#include "error-handle-lib/error-handle.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +55,7 @@ bit * getStringAsBinary(unsigned int* s, unsigned int tam)
         strncpy(&myBinaryMessage[curPos], myConvertedNumb, 8);
         curPos+=8;
     }
-
+    myBinaryMessage[curPos] = '\0';
     // printf("binaria: %s\n", myBinaryMessage);
     return myBinaryMessage;
 }
@@ -125,8 +126,9 @@ void state_create_message(tCliente *client){
             printf("\n"); 
             bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition); 
             client->message = initMessage(myBinaryMsg,currentBufferPosition*8, TEXTO);
-
-            printf("%s",client->message->dados);
+            // printf("%s \n",viterbiAlgorithm(client->message->dados, 2,96));
+            // printf("%s %d %d",client->message->dados, 2,48 );
+            
             return;
         }else {
             buffer_c[currentBufferPosition] = char_code; 
