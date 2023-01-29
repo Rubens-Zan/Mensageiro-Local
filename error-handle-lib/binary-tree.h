@@ -1,4 +1,3 @@
-#include <stdbool.h> 
 #ifndef _BINARYTREE_H_
 #define _BINARYTREE_H_
 
@@ -12,7 +11,7 @@ struct tNode
     typesState curState; // {A,B,C,D}
     tNode *parent; // Parent node
     tNode *left, *right; // Next path, being left if input is 0 and right 1
-    bool shouldContinue; // determine if this path should be continued or not
+    unsigned int shouldContinue; // determine if this path should be continued or not
     unsigned int pathError;
 };
 

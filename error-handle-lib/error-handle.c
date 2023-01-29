@@ -112,12 +112,10 @@ void cutLeafs(tListNode *head, unsigned int tam){
         tListNode *tmp = aux->next;
         for (int k=i;k < tam-1;++k){
             if (k != i && tmp->value->curState == aux->value->curState && aux->value->pathError < tmp->value->pathError ){
-                // printf("podando "); 
-                tmp->value->shouldContinue=false; 
+                tmp->value->shouldContinue=0; 
             }    
             tmp = tmp->next;
         }
-        // printf("aux %d %d  ", aux->value->curState,aux->value->parent->curState);  
         aux = aux->next;
     }
 
@@ -126,7 +124,7 @@ void cutLeafs(tListNode *head, unsigned int tam){
 bit * viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned int msgSize){
     tNode *pathRoot = startNode(0, 0, A, 0, packetSize, NULL);
     tNode *minHanningDistancePathAux;
-    pathRoot->correctedBits[0] =  '0';
+    pathRoot->correctedBits[0] = '0';
     pathRoot->correctedBits[1] = '0';
 
     unsigned int totalPackages = msgSize / packetSize; 
@@ -139,7 +137,6 @@ bit * viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned i
         updatePathError(pathRoot,height(pathRoot),&auxList,height(pathRoot),receivedStepMessage,packetSize); 
         
         cutLeafs(auxList,listSize(auxList)); // cutting leafs which collides in state and path error is bigger
-        // printLevelOrder(pathRoot);
         deleteList(&auxList);
     }
   

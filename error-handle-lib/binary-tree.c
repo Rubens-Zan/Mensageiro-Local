@@ -2,7 +2,6 @@
 #include "error-handle.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include "list.h"
 
@@ -19,7 +18,7 @@ tNode *startNode(unsigned int curPathError,unsigned int inputBit, typesState cur
 {
     tNode *n = (tNode *)malloc(sizeof(tNode));
 
-    n->shouldContinue = true;
+    n->shouldContinue = 1;
     n->pathError = curPathError; 
     n->left = NULL;
     n->right = NULL;
