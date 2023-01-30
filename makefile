@@ -1,25 +1,27 @@
-# Makefile compilacao programa
-# Para efetuar a compilação digite make all
-# Para remover os arquivos temporários digite make clean
-# Para remover os arquivos temporários e o arquivo executável digite make purge
+CC     = gcc -g
+CFLAGS =
+LFLAGS = -lncurses
 
-CFLAGS = -Wall -g
+PROG = cliente
+OBJS = utils.o \
+	binary-tree.o \
+	list.o \
+	generate-message.o \
+	error-handle.o 
 
-MODULOS = binary-tree \
-	error-handle \
-	list \
-	generate-message
 
-OBJETOS = main.o $(addsuffix .o,$(MODULOS)) 
+.PHONY:  clean purge all
 
-.PHONY : all clean
+%.o: %.c %.h
+	$(CC) -c $(CFLAGS) $<
 
-all : teste
+$(PROG):  $(OBJS) $(PROG).o
+	$(CC) -o $@ $^ $(LFLAGS)
 
-teste : $(OBJETOS)
+clean:
+	@rm -f *~ *.bak
 
-clean : 
-	$(RM) $(OBJETOS)
+purge:  clean
+	@rm -f *.o core a.out
+	@rm -f $(PROG)
 
-purge: 
-	$(RM) $(OBJETOS) teste

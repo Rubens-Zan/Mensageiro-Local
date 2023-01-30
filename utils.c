@@ -1,6 +1,6 @@
 #include "utils.h"
 #include "cliente.h"
-#include "error-handle-lib/error-handle.h"
+#include "error-handle.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,9 +15,8 @@ unsigned int getNextPressedChar()
 {
     initscr(); 
     timeout(-1);
-    unsigned int c = getch();
+    unsigned int c = getwchar();
     endwin();
-    printf("c: %d %c",c );
 
     return c;
 }
@@ -95,6 +94,7 @@ void state_init(tCliente *client)
     {
 
         printf("Digite o comando\n");
+        WINDOW * myWindow = initscr(); 
         char_code = getNextPressedChar();
         if (char_code == 'i')
         {

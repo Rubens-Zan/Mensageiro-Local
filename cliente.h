@@ -1,7 +1,7 @@
 #ifndef _CLIENTE_H_
 #define _CLIENTE_H_
 
-#include "error-handle-lib/generate-message.h"
+#include "generate-message.h"
 
 typedef enum tState
 {
