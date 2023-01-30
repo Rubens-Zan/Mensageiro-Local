@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <curses.h>
 
@@ -171,10 +173,42 @@ void state_create_message(tCliente *client)
 //TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
 void state_send_message(tCliente *client)
 {
-    while (1)
-    {
-        printf("ENVIE A MENSAGEM: %d %d %d %d %s\n", client->message->marc_inicio,client->message->paridade,client->message->tam_msg,client->message->tipo,client->message->dados); 
+    // while (1)
+    // {
+    //     printf("ENVIE A MENSAGEM: %d %d %d %d %s\n", client->message->marc_inicio,client->message->paridade,client->message->tam_msg,client->message->tipo,client->message->dados); 
+    // }
+
+    // Create socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Erro ao criar socket");
+        return;
     }
+
+    // Configure server address(127.0.0.1) -> LOOPBACK
+    struct sockaddr_in server;
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_family = AF_INET;
+    // Desired port:
+    server.sin_port = htons(8080);
+
+    // Connect to server
+    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) < 0) {
+        perror("Erro ao conectar");
+        return;
+    }
+
+    // Send message to server
+    if (send(sock, client->message, strlen(client->message), 0) < 0) {
+        perror("Erro ao enviar mensagem");
+        return;
+    }
+
+    // Status of message: DONE
+    printf("Mensagem enviada: %s\n", client->message);
+
+    // Closing socket
+    close(sock);
     
 }
 
