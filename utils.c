@@ -59,20 +59,19 @@ char *append(char *str, unsigned int shifQt)
     return str;
 }
 
-bit *getStringAsBinary(unsigned int *s, unsigned int tam)
+bit *getStringAsBinary(unsigned int *s, unsigned int tam, unsigned int binaryTam)
 {
     // A small 9 characters buffer we use to perform the conversion
-    unsigned char output[9];
+    unsigned char output[binaryTam+1];
     unsigned int curPos = 0;
-    bit *myBinaryMessage = (bit *)malloc((8 * tam) * sizeof(bit));
+    bit *myBinaryMessage = (bit *)malloc((binaryTam * tam) * sizeof(bit));
     for (unsigned int i = 0; i < tam; ++i)
     {
-        bit *myConvertedNumb = convertToBin(s[i], 8);
-        strncpy(&myBinaryMessage[curPos], myConvertedNumb, 8);
-        curPos += 8;
+        bit *myConvertedNumb = convertToBin(s[i], binaryTam);
+        strncpy(&myBinaryMessage[curPos], myConvertedNumb, binaryTam);
+        curPos += binaryTam;
     }
     myBinaryMessage[curPos] = '\0';
-    // printf("binaria: %s\n", myBinaryMessage);
     return myBinaryMessage;
 }
 
@@ -154,10 +153,8 @@ void state_create_message(tCliente *client)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
-            bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition);
-            client->message = initMessage(myBinaryMsg, currentBufferPosition * 8, TEXTO);
-            // printf("%s \n",viterbiAlgorithm(client->message->dados, 2,96));
-            // printf("%s %d %d",client->message->dados, 2,48 );
+            bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition, 8);
+            client->message = initMessage(myBinaryMsg, currentBufferPosition * 8, TEXTO);            
 
             return;
         }
@@ -171,8 +168,14 @@ void state_create_message(tCliente *client)
     }
 }
 
+//TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
 void state_send_message(tCliente *client)
 {
+    while (1)
+    {
+        printf("ENVIE A MENSAGEM: %d %d %d %d %s\n", client->message->marc_inicio,client->message->paridade,client->message->tam_msg,client->message->tipo,client->message->dados); 
+    }
+    
 }
 
 void state_send_file(tCliente *client)

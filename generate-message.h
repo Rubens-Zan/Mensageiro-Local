@@ -11,14 +11,14 @@ typedef enum {
 } typesState;
 
 typedef enum {
-    TEXTO=000001, //0x01
-    MIDIA=100000, //0x10,
-    ACK=001010, //0x0A,
-    NACK=000000, //0x00,
-    ERRO=011110, //0x1E,
-    INIT=011101, //0x1D,
-    END=001111, //0x0F,
-    DADOS=001101 //0x0D
+    TEXTO=0x01,  //000001, 
+    MIDIA=0x10,  //100000,
+    ACK=  0x0A,  //001010,
+    NACK=0x00,   //000000,
+    ERRO=0x1E,   //011110,
+    INIT=0x1D,   //011101,
+    END=0x0F,    //001111,
+    DADOS=0x0D   //001101 
 } typesMessage; 
 
 // nack: 0x00
@@ -33,12 +33,12 @@ typedef enum {
 typedef struct msgT
 {
   
-    bit marc_inicio : 8;    //Marcador de início
-    bit tam_msg : 6;       //Tamanho da mensagem
-    bit sequencia : 4;      //Número da mensagem (até 16)
-    bit tipo : 6;           //Tipo da mensagem
+    bit marc_inicio:8;    //Marcador de início
+    bit tam_msg:6;       //Tamanho da mensagem
+    bit sequencia:4;      //Número da mensagem (até 16)
+    bit tipo:6;           //Tipo da mensagem
     bit *dados;         //Buffer dos dados [64]
-    bit paridade : 8;       //Paridade
+    bit paridade:8;       //Paridade
 } msgT;
 
 bit calculaParidade(bit *conteudo,unsigned int tam); 

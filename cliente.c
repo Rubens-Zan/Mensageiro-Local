@@ -7,6 +7,7 @@
 void main(){
    
     tCliente *client =(tCliente *) malloc(sizeof(tCliente));
+    
     client->estado = INICIO; 
     
     while (1){

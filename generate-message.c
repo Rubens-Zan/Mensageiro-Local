@@ -1,7 +1,11 @@
 #include "generate-message.h"
 #include "error-handle.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#define MARC_INICIO 0x7e
 
 /** TRELLIS ENCODING **/
 void trellisShift(bit *trellis, bit newBit){
@@ -53,10 +57,14 @@ bit calculaParidade(bit *conteudo,unsigned int tam){
 // TODO : AJUSTAR PARA CONVERTER PARA BINARIO O TAMANHO
 msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType){
     msgT *message = (msgT *)malloc(sizeof(msgT));
+    
     message->dados = trellisEncode(originalMessage, size); 
-    // strcpy(message->tipo, msgType); 
-    // message->tam_msg = size * 2; // duplica por causa da modulacao da trelica 
     message->paridade = calculaParidade(message->dados, size);
+    message->marc_inicio = MARC_INICIO;
+    message->tipo = msgType; 
+    message->tam_msg = strlen(message->dados); // duplica por causa da modulacao da trelica 
+    message->sequencia = 0; 
+    
     return message; 
 }
 /****/
