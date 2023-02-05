@@ -54,8 +54,7 @@ bit calculaParidade(bit *conteudo,unsigned int tam){
     return aux;
 }
 
-// TODO : AJUSTAR PARA CONVERTER PARA BINARIO O TAMANHO
-msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType){
+msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia){ 
     msgT *message = (msgT *)malloc(sizeof(msgT));
     
     message->dados = trellisEncode(originalMessage, size); 
@@ -63,8 +62,10 @@ msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType){
     message->marc_inicio = MARC_INICIO;
     message->tipo = msgType; 
     message->tam_msg = strlen(message->dados); // duplica por causa da modulacao da trelica 
-    message->sequencia = 0; 
+    message->sequencia = sequencia_global; 
     
     return message; 
 }
 /****/
+
+

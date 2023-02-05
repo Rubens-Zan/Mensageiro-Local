@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+// #include <sys/socket.h>
+// #include <arpa/inet.h>
 #include <unistd.h>
 #include <curses.h>
 
@@ -19,7 +19,9 @@ unsigned int getNextPressedChar()
     timeout(-1);
     unsigned int c = getwchar();
     endwin();
-
+    // unsigned char c; 
+    // c = getchar();
+     
     return c;
 }
 
@@ -95,8 +97,9 @@ void state_init(tCliente *client)
     {
 
         printf("Digite o comando\n");
-        WINDOW * myWindow = initscr(); 
-        char_code = getNextPressedChar();
+        // WINDOW * myWindow = initscr(); 
+        // char_code = getNextPressedChar();
+        char_code = getchar();
         if (char_code == 'i')
         {
             printf("INSERT\n");
@@ -132,6 +135,11 @@ void state_init(tCliente *client)
     }
 }
 
+void incrementaSequencia(){
+    if (sequencia_global < 15) sequencia_global++;
+    else sequencia_global=1;
+}
+
 void state_create_message(tCliente *client)
 {
     unsigned int char_code;
@@ -155,9 +163,12 @@ void state_create_message(tCliente *client)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
-            bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition, 8);
-            client->message = initMessage(myBinaryMsg, currentBufferPosition * 8, TEXTO);            
 
+            incrementaSequencia(); 
+            bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition, 8);
+            client->message = initMessage(myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+            printf("myBinaryMsg %s \n",client->message->dados);
+            printf("viterbi: %s \n", viterbiAlgorithm(client->message->dados,2, currentBufferPosition * 8 * 2));
             return;
         }
         else
@@ -171,6 +182,57 @@ void state_create_message(tCliente *client)
 }
 
 //TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
+void put_dados_cliente (int soquete, FILE * arq, int permissao){
+
+    int contador = 1;
+    printf("put_dados_cliente\n");
+
+    msgT mensagem;
+
+    bit buffer_arq[TAM_MAX_DADOS];
+    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, arq);
+    while (bytes_lidos != 0){
+        contador++;
+        // init_mensagem(&mensagem, bytes_lidos, sequencia_global, DADOS, buffer_arq);
+        initMessage(buffer_arq,bytes_lidos, DADOS, sequencia_global);
+        int ack = 0;
+        while (! ack){
+            // if (! manda_mensagem (soquete, &mensagem, 0))
+                // perror("Erro ao enviar mensagem no put_dados");
+            printf("dados.. %d, buffer_arq \n %s",bytes_lidos,buffer_arq);
+            // switch (recebe_retorno(soquete, &mensagem)) {
+                
+                //se for ack, quebra o laço interno e vai pro laço externo pegar mais dados
+                // case ACK:
+                    ack = 1;
+                    // break;
+            // }
+        }
+        memset(buffer_arq, 0, TAM_MAX_DADOS);
+        bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, arq);
+    }
+
+    //manda uma mensagem do tipo FIM
+	// char permissao_string[TAM_MAX_DADOS - 1];
+    // sprintf(permissao_string, "%d", permissao);
+
+    // init_mensagem(&mensagem, strlen(permissao_string), sequencia_global, FIM, permissao_string);
+
+    //considerando que o servidor responde um FIM com um ACK
+    // while (1){
+        // if (! manda_mensagem (soquete, &mensagem, 0))
+            // perror("Erro ao enviar mensagem no put_dados");
+
+        // switch (recebe_retorno(soquete, &mensagem)) {
+            //se for ack, acaba
+            // case ACK:
+                // printf("put_dados_cliente: recebeu um ack do server, retornando...\n");
+                // printf("Contador -> %d\n", contador);
+                return;
+        // }
+    // }
+}
+
 void state_send_message(tCliente *client)
 {
     // while (1)
@@ -178,45 +240,51 @@ void state_send_message(tCliente *client)
     //     printf("ENVIE A MENSAGEM: %d %d %d %d %s\n", client->message->marc_inicio,client->message->paridade,client->message->tam_msg,client->message->tipo,client->message->dados); 
     // }
 
-    // Create socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("Erro ao criar socket");
-        return;
-    }
-
-    // Configure server address(127.0.0.1) -> LOOPBACK
-    struct sockaddr_in server;
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server.sin_family = AF_INET;
-    // Desired port:
-    server.sin_port = htons(8080);
-
-    // Connect to server
-    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) < 0) {
-        perror("Erro ao conectar");
-        return;
-    }
-
     // Send message to server
-    if (send(sock, client->message, strlen(client->message), 0) < 0) {
-        perror("Erro ao enviar mensagem");
-        return;
-    }
+    // if (send(sock, client->message, strlen(client->message), 0) < 0) {
+    //     perror("Erro ao enviar mensagem");
+    //     return;
+    // }
 
     // Status of message: DONE
-    printf("Mensagem enviada: %s\n", client->message);
-
-    // Closing socket
-    close(sock);
-    
+    // printf("Mensagem enviada: %s\n", client->message);    
 }
+
+FILE *abre_arquivo(char *nome_arquivo, char *modo) {
+
+    char arquivo[65536]; // buffer imenso 
+
+    strcpy(arquivo, "./");
+    strcat(arquivo, nome_arquivo);
+
+    //abre o arquivo dado com o modo dado
+    printf("ARQ %s MODO %s \n", arquivo,modo); 
+
+    FILE *arq = fopen(arquivo, modo);
+
+    //retorna null se nao foi bem sucedido
+    if (! arq) {
+        perror("O arquivo nao pode ser aberto");
+        return NULL;
+    }
+
+    //retorna o arquivo
+    return arq;
+
+}
+
 
 void state_send_file(tCliente *client)
 {
+    FILE *arq = abre_arquivo(client->fileName, "rb"); 
+
     while (1)
     {
-        printf("\n SEND state");
+
+        put_dados_cliente(12012, arq, 10);
+        client->estado = FIM_PROGRAMA;
+        return;
+        // printf("\n SEND state");
     }
 }
 

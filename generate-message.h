@@ -1,7 +1,10 @@
 #ifndef _MSG_GENERATOR_H_
 #define _MSG_GENERATOR_H_
 
-typedef unsigned char bit;    
+#define TAM_MAX_DADOS 256
+typedef unsigned char bit;  
+
+extern int sequencia_global;
 
 typedef enum {
     A, //= 00,
@@ -32,7 +35,6 @@ typedef enum {
 
 typedef struct msgT
 {
-  
     bit marc_inicio:8;    //Marcador de início
     bit tam_msg:6;       //Tamanho da mensagem
     bit sequencia:4;      //Número da mensagem (até 16)
@@ -43,6 +45,5 @@ typedef struct msgT
 
 bit calculaParidade(bit *conteudo,unsigned int tam); 
 bit * trellisEncode(bit *originalMessage, unsigned int size); 
-msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType); 
-
+msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia); 
 #endif

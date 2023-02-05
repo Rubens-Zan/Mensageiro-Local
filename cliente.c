@@ -3,6 +3,7 @@
 #include "cliente.h"
 #include "utils.h"
 
+int sequencia_global = 1; 
 
 void main(){
    

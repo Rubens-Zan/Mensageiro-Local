@@ -27,6 +27,15 @@ tNode *startNode(unsigned int curPathError,unsigned int inputBit, typesState cur
     n->parent = parentNode; 
     return n;
 }
+
+void free_binary_tree(tNode *root) {
+  if (root == NULL) return;
+  free_binary_tree(root->left);
+  free_binary_tree(root->right);
+  free(root->correctedBits);
+  free(root);
+}
+
 /****/
 unsigned int countNodes(tNode *n)
 {
@@ -137,9 +146,6 @@ void printCurrentLevel(tNode* root, int level)
     }
 }
 /****/
-
-
-
 
 void getFullMessageDecoded(tNode* leaf){
     if (leaf->parent == NULL)
