@@ -1,27 +1,36 @@
-CC     = gcc -g
-CFLAGS =
-LFLAGS = -lncurses
+# Makefile compilacao programa processamento de imagens
+# Para efetuar a compilação digite make all ou make
+# Para remover os arquivos temporários digite make clean
+# Para remover os arquivos temporários e o arquivo executável digite make purge
 
-PROG = cliente
-OBJS = utils.o \
-	binary-tree.o \
-	list.o \
-	generate-message.o \
-	error-handle.o 
+CFLAGS =-lncurses
+
+MODULOS = utils \
+	binary-tree \
+	list \
+	generate-message \
+	error-handle \
+	ConexaoRawSocket
 
 
-.PHONY:  clean purge all
+OBJETOS = $(addsuffix .o,$(MODULOS)) 
 
-%.o: %.c %.h
-	$(CC) -c $(CFLAGS) $<
+ALVOS =  servidor cliente 
 
-$(PROG):  $(OBJS) $(PROG).o
-	$(CC) -o $@ $^ $(LFLAGS)
+.PHONY : all clean purge
 
-clean:
-	@rm -f *~ *.bak
+all : $(ALVOS)
+
+servidor: $(OBJETOS)
+	gcc -o $@ $(OBJETOS) servidor.c $(CFLAGS)
+	
+cliente: $(OBJETOS)
+	gcc -o $@ $(OBJETOS) cliente.c $(CFLAGS)
+
+
+clean : 
+	$(RM) $(OBJETOS)
 
 purge:  clean
 	@rm -f *.o core a.out
 	@rm -f $(PROG)
-

@@ -4,10 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+
+#include <locale.h>
 #include <curses.h>
+#include <wchar.h>
+#include <termios.h>
+
+#include <dirent.h>
+#include <poll.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define ESC 27
 // #define ENTER 13
@@ -15,14 +24,21 @@
 
 unsigned int getNextPressedChar()
 {
-    initscr(); 
-    timeout(-1);
-    unsigned int c = getwchar();
-    endwin();
-    // unsigned char c; 
-    // c = getchar();
-     
-    return c;
+  
+  wint_t wch;
+  struct termios ttystate, ttysave;
+  
+  tcgetattr(STDIN_FILENO, &ttystate);
+  ttysave = ttystate;
+  ttystate.c_lflag &= ~(ICANON | ECHO);
+  ttystate.c_cc[VMIN] = 1;
+  tcsetattr(STDIN_FILENO, TCSANOW, &ttystate);
+
+  setlocale(LC_ALL, "");
+  wch = getwchar();
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &ttysave);
+  return wch;
 }
 
 bit *convertToBin(unsigned int num, unsigned int bitsSize)
@@ -98,8 +114,7 @@ void state_init(tCliente *client)
 
         printf("Digite o comando\n");
         // WINDOW * myWindow = initscr(); 
-        // char_code = getNextPressedChar();
-        char_code = getchar();
+        char_code = getNextPressedChar();
         if (char_code == 'i')
         {
             printf("INSERT\n");
@@ -168,7 +183,6 @@ void state_create_message(tCliente *client)
             bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition, 8);
             client->message = initMessage(myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
             printf("myBinaryMsg %s \n",client->message->dados);
-            printf("viterbi: %s \n", viterbiAlgorithm(client->message->dados,2, currentBufferPosition * 8 * 2));
             return;
         }
         else
@@ -233,7 +247,7 @@ void put_dados_cliente (int soquete, FILE * arq, int permissao){
     // }
 }
 
-void state_send_message(tCliente *client)
+void state_send_message(tCliente *client, int socket)
 {
     // while (1)
     // {
@@ -241,13 +255,14 @@ void state_send_message(tCliente *client)
     // }
 
     // Send message to server
-    // if (send(sock, client->message, strlen(client->message), 0) < 0) {
-    //     perror("Erro ao enviar mensagem");
-    //     return;
-    // }
+
+    if (send(socket, client->message, sizeof(msgT), 0) < 0){
+        return;
+	}
 
     // Status of message: DONE
-    // printf("Mensagem enviada: %s\n", client->message);    
+    printf("Mensagem enviada: %s\n", client->message->dados);    
+    client->estado = INICIO; 
 }
 
 FILE *abre_arquivo(char *nome_arquivo, char *modo) {
@@ -297,3 +312,61 @@ void state_end(tCliente *client)
 }
 
 /**FIM ESTADOS DO CLIENTE*/
+
+int recebe_mensagem_server(int soquete, msgT *mensagem) {
+
+    while (1) {
+        int retorno_func = recebe_mensagem(soquete, mensagem, 0);
+        printf("retorno_func %d \n", retorno_func);    
+		// if (retorno_func == 0) 
+        //     perror("Erro ao receber mensagem no recebe_retorno");
+		// else if (retorno_func == 2){
+		// 	perror("Timeout");
+		// 	continue;
+		// }
+
+        // if (mensagem->marc_inicio == MARC_INICIO ) {
+        //     // if (testa_paridade(mensagem))
+        //         return mensagem->tipo;
+            // else
+                // manda_nack(soquete);
+        // }
+        // else
+            // manda_nack(soquete);
+    }
+}
+
+int recebe_mensagem (int soquete, msgT *mensagem, int timeout){
+    while (1){
+        printf("akns  "); 
+		//cuida do timeout
+		struct pollfd fds;
+
+		fds.fd = soquete;
+		fds.events = POLLIN;
+
+		int retorno_poll = poll(&fds, 1, TIMEOUT);
+
+		if (timeout){
+			if (retorno_poll == 0)
+				return 2;
+			else if (retorno_poll < 0)
+				return 0;
+		}
+		
+        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
+            return 0;
+    
+        if (mensagem->sequencia != sequencia_global) {
+            continue;
+        }
+
+		printf("recebeu tipo %d e sequencia %d\n\n", mensagem->tipo, mensagem->sequencia);
+
+        if (sequencia_global >= 15)
+            sequencia_global = 1;
+        else
+            sequencia_global++;
+        return 1;
+    }
+}

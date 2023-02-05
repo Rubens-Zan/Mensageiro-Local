@@ -157,7 +157,7 @@ bit * viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned i
     prnList(head);
     #endif
 
-    deleteList(&head);
-    free_binary_tree(pathRoot); 
+    // deleteList(&head);
+    // free_binary_tree(pathRoot); 
     return decodedMessage; 
 }

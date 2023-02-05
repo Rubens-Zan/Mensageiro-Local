@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include "cliente.h"
 #include "utils.h"
+#include "ConexaoRawSocket.h"
 
 int sequencia_global = 1; 
 
 void main(){
    
     tCliente *client =(tCliente *) malloc(sizeof(tCliente));
+	int soquete = ConexaoRawSocket("lo");
     
     client->estado = INICIO; 
     
@@ -21,7 +23,7 @@ void main(){
             state_create_message(client);
             break;
         case ENVIA_MENSAGEM:
-            state_send_message(client);
+            state_send_message(client, soquete);
             break;
         case ENVIA_ARQUIVO:
             state_send_file(client);

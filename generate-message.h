@@ -24,6 +24,8 @@ typedef enum {
     DADOS=0x0D   //001101 
 } typesMessage; 
 
+#define MARC_INICIO 0x7e
+
 // nack: 0x00
 // exto: 0x01
 // mídia: 0x10

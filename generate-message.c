@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MARC_INICIO 0x7e
 
 /** TRELLIS ENCODING **/
 void trellisShift(bit *trellis, bit newBit){

@@ -2,6 +2,7 @@
     "files.associations": {
         "unistd.h": "c",
         "curses.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "locale.h": "c"
     }
 }
