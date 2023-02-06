@@ -367,7 +367,7 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
             return 0;
         }else {
             printf("recebeu tipo %d e sequencia %d\n\n", mensagem->tipo, mensagem->sequencia);
-            // return 1; //adicionar? 
+            return 1; //adicionar? 
         }
 
         // if (mensagem->sequencia != sequencia_global)
