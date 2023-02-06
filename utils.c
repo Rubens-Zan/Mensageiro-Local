@@ -345,7 +345,7 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
 {
     while (1)
     {
-        printf("akns  ");
+        // printf("akns  ");
         // cuida do timeout
         struct pollfd fds;
 
@@ -362,20 +362,23 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
                 return 0;
         }
 
-        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
+        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0){
             return 0;
-
-        if (mensagem->sequencia != sequencia_global)
-        {
-            continue;
+        }else {
+            printf("recebeu tipo %d e sequencia %d\n\n", mensagem->tipo, mensagem->sequencia);
+            // return 1; //adicionar? 
         }
 
-        printf("recebeu tipo %d e sequencia %d\n\n", mensagem->tipo, mensagem->sequencia);
+        // if (mensagem->sequencia != sequencia_global)
+        // {
+        //     continue;
+        // }
 
-        if (sequencia_global >= 15)
-            sequencia_global = 1;
-        else
-            sequencia_global++;
-        return 1;
+
+        // if (sequencia_global >= 15)
+        //     sequencia_global = 1;
+        // else
+        //     sequencia_global++;
+        // return 1;
     }
 }
