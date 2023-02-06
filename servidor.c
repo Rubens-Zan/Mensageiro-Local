@@ -24,7 +24,7 @@ int main(){
     // printf ("soquete -> %d\n", soquete);
 
     msgT mensagem;
-    printf("ESTOU AQ crll"); 
+    printf("ESTOU AQ crll!\n"); 
 
 
     while (1) {

@@ -4,16 +4,18 @@
 #include "utils.h"
 #include "ConexaoRawSocket.h"
 
-int sequencia_global = 1; 
+int sequencia_global = 1;
 
-void main(){
-   
-    tCliente *client =(tCliente *) malloc(sizeof(tCliente));
-	int soquete = ConexaoRawSocket("lo");
-    
-    client->estado = INICIO; 
-    
-    while (1){
+void main()
+{
+
+    tCliente *client = (tCliente *)malloc(sizeof(tCliente));
+    int soquete = ConexaoRawSocket("lo");
+
+    client->estado = INICIO;
+
+    while (1)
+    {
         switch (client->estado)
         {
         case INICIO:
@@ -30,7 +32,7 @@ void main(){
             break;
         case FIM_PROGRAMA:
             // state_end(client);
-            return; 
+            return;
             break;
         default:
             break;
