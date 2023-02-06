@@ -320,7 +320,8 @@ int recebe_mensagem_server(int soquete, msgT *mensagem)
     while (1)
     {
         int retorno_func = recebe_mensagem(soquete, mensagem, 100000);
-        printf("retorno_func %d \n", retorno_func);
+        if (retorno_func == 1)
+            printf("retorno_func %s \n", mensagem->tipo);
         // if (retorno_func == 0)
         //     perror("Erro ao receber mensagem no recebe_retorno");
         // else if (retorno_func == 2)
