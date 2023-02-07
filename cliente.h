@@ -6,7 +6,7 @@
 typedef enum tState
 {
     INICIO,
-    CRIACAO_MENSAGEM,
+    ENVIA_TEXTO,
     ENVIA_MENSAGEM, 
     ENVIA_ARQUIVO,
     FIM_PROGRAMA

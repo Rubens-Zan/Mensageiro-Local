@@ -30,7 +30,7 @@ int main(){
     while (1) {
           
         
-        switch (recebe_mensagem_server(soquete, &mensagem))
+        switch (recebeMensagemServerLoop(soquete, &mensagem))
         {
         // case PUT:
         //     trata_put_servidor(soquete, &mensagem);

@@ -1,7 +1,7 @@
 #ifndef _MSG_GENERATOR_H_
 #define _MSG_GENERATOR_H_
 
-#define TAM_MAX_DADOS 256
+#define TAM_MAX_DADOS 64
 typedef unsigned char bit;  
 
 extern int sequencia_global;
@@ -41,11 +41,12 @@ typedef struct msgT
     bit tam_msg:6;       //Tamanho da mensagem
     bit sequencia:4;      //Número da mensagem (até 16)
     bit tipo:6;           //Tipo da mensagem
-    bit *dados;         //Buffer dos dados [64]
+    bit dados[64];         //Buffer dos dados [64]
     bit paridade:8;       //Paridade
 } msgT;
 
 bit calculaParidade(bit *conteudo,unsigned int tam); 
-bit * trellisEncode(bit *originalMessage, unsigned int size); 
-msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia); 
+void trellisEncode(bit *encodedMessage,bit *originalMessage, unsigned int size);
+void initMessage(msgT *mensagem,bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia); 
+
 #endif

@@ -4,14 +4,14 @@
 #include "cliente.h"
 
 #define TIMEOUT 1000*3
-
+#define TIMEOUT_RETURN 2
+#define BUFFER_GIGANTE 65536
 void state_init(tCliente *client); 
-void state_create_message(tCliente *client); 
-void state_send_file(tCliente *client); 
+void state_create_message(int soquete,tCliente *client); 
+void state_send_file(int soquete, tCliente *client); 
 void state_end(tCliente *client); 
-void state_send_message(tCliente *client, int socket); 
 int recebe_mensagem (int soquete, msgT *mensagem, int timeout);
-int recebe_mensagem_server(int soquete, msgT *mensagem); 
+int recebeMensagemServerLoop(int soquete, msgT *mensagem); 
 bit *getStringAsBinary(unsigned int *s, unsigned int tam, unsigned int binaryTam);
-
+int sendMessage(int soquete, msgT *mensagem); 
 #endif

@@ -21,14 +21,11 @@ void main()
         case INICIO:
             state_init(client);
             break;
-        case CRIACAO_MENSAGEM:
-            state_create_message(client);
-            break;
-        case ENVIA_MENSAGEM:
-            state_send_message(client, soquete);
+        case ENVIA_TEXTO:
+            state_create_message(soquete, client);
             break;
         case ENVIA_ARQUIVO:
-            state_send_file(client);
+            state_send_file(soquete, client);
             break;
         case FIM_PROGRAMA:
             // state_end(client);
@@ -38,4 +35,6 @@ void main()
             break;
         }
     }
+
+    free(client); 
 }

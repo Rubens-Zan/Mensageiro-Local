@@ -25,12 +25,10 @@ bit encodedX2(bit *trellis){
     return x2; 
 }
 
-bit * trellisEncode(bit *originalMessage, unsigned int size){
+void trellisEncode(bit *encodedMessage,bit *originalMessage, unsigned int size){
     bit trellis[4] = "000"; 
     trellis[3] = '\0';
 
-    bit *encodedMessage = (bit *) malloc(sizeof(bit) * (size * 2)); // since message will be encoded to x1 and x2, it will be double the message
-    
     unsigned int encodCounter = 0;
     for (unsigned int i=0;i < size;++i){
         trellisShift(trellis, originalMessage[i]);
@@ -39,8 +37,6 @@ bit * trellisEncode(bit *originalMessage, unsigned int size){
         encodCounter+=2; 
     }
     encodedMessage[encodCounter] = '\0';
-
-    return encodedMessage; 
 }
 
 bit calculaParidade(bit *conteudo,unsigned int tam){
@@ -53,17 +49,13 @@ bit calculaParidade(bit *conteudo,unsigned int tam){
     return aux;
 }
 
-msgT *initMessage(bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia){ 
-    msgT *message = (msgT *)malloc(sizeof(msgT));
-    
-    message->dados = trellisEncode(originalMessage, size); 
-    message->paridade = calculaParidade(message->dados, size);
-    message->marc_inicio = MARC_INICIO;
-    message->tipo = msgType; 
-    message->tam_msg = strlen(message->dados); // duplica por causa da modulacao da trelica 
-    message->sequencia = sequencia_global; 
-    
-    return message; 
+void initMessage(msgT *mensagem,bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia){ 
+    trellisEncode(mensagem->dados, originalMessage, size); 
+    mensagem->paridade = calculaParidade(mensagem->dados, size);
+    mensagem->marc_inicio = MARC_INICIO;
+    mensagem->tipo = msgType; 
+    mensagem->tam_msg = strlen(mensagem->dados); // duplica por causa da modulacao da trelica 
+    mensagem->sequencia = sequencia_global; 
 }
 /****/
 

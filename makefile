@@ -17,7 +17,10 @@ OBJETOS = $(addsuffix .o,$(MODULOS))
 
 ALVOS =  servidor cliente 
 
-.PHONY : all clean purge
+.PHONY : all clean purge debug
+
+debug: CFLAGS += -DDEBUG
+debug: $(PROG)
 
 all : $(ALVOS)
 
