@@ -3,7 +3,8 @@
 # Para remover os arquivos temporários digite make clean
 # Para remover os arquivos temporários e o arquivo executável digite make purge
 
-CFLAGS =-lncurses
+CFLAGS =
+#-lncurses
 
 MODULOS = utils \
 	binary-tree \

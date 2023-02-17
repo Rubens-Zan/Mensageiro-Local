@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include <locale.h>
-#include <curses.h>
+//#include <curses.h>
 #include <wchar.h>
 #include <termios.h>
 
@@ -131,8 +131,12 @@ void state_init(tCliente *client)
         }
         else if (char_code == 's')
         {
-            filename_c = strtok(buffer_c, " ");
-            filename_c = strtok(NULL, " ");
+            scanf("%63[^\n]", filename_c);
+            getchar();
+
+            printf("ARQ %s", filename_c); 
+            // filename_c = strtok(buffer_c, " ");
+            // filename_c = strtok(NULL, " ");
             client->estado = ENVIA_ARQUIVO;
             client->fileName = filename_c;
             return;
@@ -181,8 +185,9 @@ void state_create_message(int soquete,tCliente *client)
                 // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
                 // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
                 // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
-                bit *myBinaryMsg = getStringAsBinary(buffer_c, currentBufferPosition, 8);
-                initMessage(&client->message,myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+                bit myBinaryMsg[9]; 
+                getStringAsBinary(myBinaryMsg,buffer_c, currentBufferPosition, 8);
+                initMessage(client->message,myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
                 incrementaSequencia(); 
                 printf("myBinaryMsg %s \n", client->message->dados);
                 // MANDAR A MENSAGEM CRIADA 
@@ -279,45 +284,45 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem){
             perror("Erro ao receber mensagem no recebe_retorno");
         
         // Verifica se o marcador de início e a paridade são os corretos
-        if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN)) {
-            //Testa a paridade
-            if (testa_paridade(mensagem) || (retorno_func == TIMEOUT_RETURN)) {
+        // if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN)) {
+        //     //Testa a paridade
+        //     if (testa_paridade(mensagem) || (retorno_func == TIMEOUT_RETURN)) {
 
-                //se for um NACK, reenvia a mensagem
-                if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN)){
-					if (retorno_func == TIMEOUT_RETURN)
-						perror ("Timout");
+        //         //se for um NACK, reenvia a mensagem
+        //         if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN)){
+		// 			if (retorno_func == TIMEOUT_RETURN)
+		// 				perror ("Timout");
 
-                    //aqui nao damos return pro laço recomeçar e esperar mais uma resposta
-                    char buffer_aux[TAM_MAX_DADOS];
+        //             //aqui nao damos return pro laço recomeçar e esperar mais uma resposta
+        //             char buffer_aux[TAM_MAX_DADOS];
 
-					memset(buffer_aux, 0, TAM_MAX_DADOS);
-                    memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
+		// 			memset(buffer_aux, 0, TAM_MAX_DADOS);
+        //             memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
                     
-					initMessage(&mensagem_aux,buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
+		// 			initMessage(&mensagem_aux,buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
 
-					//printf("Remandando o seguinte:\n");
-					//imprime_mensagem(&mensagem_aux);
-					//printf("\n");
+		// 			//printf("Remandando o seguinte:\n");
+		// 			//imprime_mensagem(&mensagem_aux);
+		// 			//printf("\n");
 
-                    if (! sendMessage (soquete, &mensagem_aux))
-                        perror("Erro ao re-mandar mensagem no recebe_retorno_put");
-                }
+        //             if (! sendMessage (soquete, &mensagem_aux))
+        //                 perror("Erro ao re-mandar mensagem no recebe_retorno_put");
+        //         }
 
-                // Senão retorna o tipo    
-                else {
-                    return mensagem->tipo;
-                }
+        //         // Senão retorna o tipo    
+        //         else {
+        //             return mensagem->tipo;
+        //         }
             
-            }
-            else{
-            //retorna NACK para mensagens com erro no marcador ou na paridade
-                mandaRetorno(0,soquete);
-            }    
-        }
-        else {
-            mandaRetorno(1,soquete);
-        }
+        //     }
+        //     else{
+        //     //retorna NACK para mensagens com erro no marcador ou na paridade
+        //         mandaRetorno(0,soquete);
+        //     }    
+        // }
+        // else {
+        //     mandaRetorno(1,soquete);
+        // }
 		
     }
 }
@@ -355,23 +360,24 @@ void incrementaSequencia()
 }
 
 int mandaRetorno(int isAck, int soquete){
+    char *msg = "";
     msgT mensagem;
-    if (isAck){
-        initMessage(&mensagem, 0, sequencia_global, NACK, "");
-        if( ! sendMessage (soquete, &mensagem, 0)) {
-            perror("Erro ao mandar nack");
-        }
+    // if (isAck){
+    //     initMessage(&mensagem, 0, sequencia_global, NACK, msg);
+    //     if( ! sendMessage (soquete, &mensagem)) {
+    //         perror("Erro ao mandar nack");
+    //     }
 
-    }else {
-        initMessage(&mensagem, 0, sequencia_global, ACK, "");
-        if( ! sendMessage (soquete, &mensagem, 0)) {
-            perror("Erro ao mandar ack");
-        }
-    }
+    // }else {
+    //     initMessage(&mensagem, 0, sequencia_global, ACK, msg);
+    //     if( ! sendMessage (soquete, &mensagem)) {
+    //         perror("Erro ao mandar ack");
+    //     }
+    // }
 }
 
 int sendMessage(int soquete, msgT *mensagem){
-    if (send(soquete, mensagem, sizeof(msg_t), 0) < 0){
+    if (send(soquete, mensagem, sizeof(msgT), 0) < 0){
         return 0;
 	}else{
         // error sending message... 
