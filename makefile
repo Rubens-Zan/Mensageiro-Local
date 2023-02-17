@@ -6,7 +6,8 @@
 CFLAGS =
 #-lncurses
 
-MODULOS = utils \
+MODULOS = client_lib \
+	server_lib \
 	binary-tree \
 	list \
 	generate-message \
@@ -36,5 +37,6 @@ clean :
 	$(RM) $(OBJETOS)
 
 purge:  clean
+	$(RM) $(OBJETOS) cliente servidor
 	@rm -f *.o core a.out
-	@rm -f $(PROG)
+

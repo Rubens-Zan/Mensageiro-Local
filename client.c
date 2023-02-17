@@ -25,7 +25,7 @@ void main()
             state_create_message(soquete, client);
             break;
         case ENVIA_ARQUIVO:
-            FILE * file = fopen(client->fileName, "rb");
+            FILE *file = fopen(client->fileName, "rb");
             state_send_file(soquete, file);
             break;
         case FIM_PROGRAMA:
@@ -37,5 +37,5 @@ void main()
         }
     }
 
-    free(client); 
+    free(client);
 }

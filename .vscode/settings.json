@@ -3,6 +3,10 @@
         "unistd.h": "c",
         "curses.h": "c",
         "string.h": "c",
-        "locale.h": "c"
-    }
+        "locale.h": "c",
+        "types.h": "c",
+        "socket.h": "c",
+        "conexaorawsocket.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

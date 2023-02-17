@@ -5,34 +5,39 @@
 #include <string.h>
 #include "list.h"
 
-void copyPathAggregatedMessage(bit *prevPathMess, bit *levelMessage, bit *pathAggMess, unsigned int level, unsigned int packetSize){
-    for (int i=0;i < (packetSize * level-1);++i){
+void copyPathAggregatedMessage(bit *prevPathMess, bit *levelMessage, bit *pathAggMess, unsigned int level, unsigned int packetSize)
+{
+    for (int i = 0; i < (packetSize * level - 1); ++i)
+    {
         pathAggMess[i] = prevPathMess[i];
     }
-    for (int i=packetSize * level-1;i < packetSize * level;++i){
-        pathAggMess[i] = levelMessage[i - packetSize* level];
+    for (int i = packetSize * level - 1; i < packetSize * level; ++i)
+    {
+        pathAggMess[i] = levelMessage[i - packetSize * level];
     }
 };
 
-tNode *startNode(unsigned int curPathError,unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode)
+tNode *startNode(unsigned int curPathError, unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode)
 {
     tNode *n = (tNode *)malloc(sizeof(tNode));
 
     n->shouldContinue = 1;
-    n->pathError = curPathError; 
+    n->pathError = curPathError;
     n->left = NULL;
     n->right = NULL;
     n->receivedBit = inputBit;
     getNextState(curState, inputBit, n); // get next state according to the trellice diagram
-    n->parent = parentNode; 
+    n->parent = parentNode;
     return n;
 }
 
-void free_binary_tree(tNode *root) {
-  if (root == NULL) return;
-  free_binary_tree(root->left);
-  free_binary_tree(root->right);
-  free(root);
+void free_binary_tree(tNode *root)
+{
+    if (root == NULL)
+        return;
+    free_binary_tree(root->left);
+    free_binary_tree(root->right);
+    free(root);
 }
 
 /****/
@@ -57,101 +62,112 @@ void emordem(tNode *no)
 }
 
 /* Function to print level order traversal a tree*/
-void printLevelOrder(tNode* root)
+void printLevelOrder(tNode *root)
 {
     int h = height(root);
     printf("\n");
     int i;
-    for (i = 0; i <= h; i++){
+    for (i = 0; i <= h; i++)
+    {
         printCurrentLevel(root, i);
         printf("\n");
     }
 }
 
-void getNextStep(tNode* root, unsigned int packetSize)
+void getNextStep(tNode *root, unsigned int packetSize)
 {
     int h = height(root);
     getNextLeafOnLevel(root, h, packetSize, h);
 }
 
-void getNextLeafOnLevel(tNode* root, int level,unsigned int packetSize, unsigned int height)
+void getNextLeafOnLevel(tNode *root, int level, unsigned int packetSize, unsigned int height)
 {
     if (root == NULL)
         return;
-    if (level == 0){
-        if (root->shouldContinue){
-            root->left =  startNode(root->pathError, 0, root->curState, height,packetSize, root); 
-            root->right = startNode(root->pathError, 1, root->curState, height,packetSize, root); 
+    if (level == 0)
+    {
+        if (root->shouldContinue)
+        {
+            root->left = startNode(root->pathError, 0, root->curState, height, packetSize, root);
+            root->right = startNode(root->pathError, 1, root->curState, height, packetSize, root);
         }
     }
-    else if (level > 0) {
-        getNextLeafOnLevel(root->left, level - 1,packetSize,height);
-        getNextLeafOnLevel(root->right, level - 1,packetSize,height);
+    else if (level > 0)
+    {
+        getNextLeafOnLevel(root->left, level - 1, packetSize, height);
+        getNextLeafOnLevel(root->right, level - 1, packetSize, height);
     }
 }
 
-void getListLeafsHannigPathDistance(tNode* root, int level,unsigned int packetSize, unsigned int height, tNode** minHanningDistPathNode)
+void getListLeafsHannigPathDistance(tNode *root, int level, unsigned int packetSize, unsigned int height, tNode **minHanningDistPathNode)
 {
     if (root == NULL)
         return;
-    if (level == 0){
-        if ((*minHanningDistPathNode) != NULL){
-            if (root->pathError < (*minHanningDistPathNode)->pathError )
-                (*minHanningDistPathNode) = root;  
-        }else {
-            (*minHanningDistPathNode) = root; 
+    if (level == 0)
+    {
+        if ((*minHanningDistPathNode) != NULL)
+        {
+            if (root->pathError < (*minHanningDistPathNode)->pathError)
+                (*minHanningDistPathNode) = root;
         }
-        
+        else
+        {
+            (*minHanningDistPathNode) = root;
+        }
     }
-    else if (level > 0) {
-        getListLeafsHannigPathDistance(root->left, level - 1,packetSize,height, minHanningDistPathNode);
-        getListLeafsHannigPathDistance(root->right, level - 1,packetSize,height,minHanningDistPathNode);
+    else if (level > 0)
+    {
+        getListLeafsHannigPathDistance(root->left, level - 1, packetSize, height, minHanningDistPathNode);
+        getListLeafsHannigPathDistance(root->right, level - 1, packetSize, height, minHanningDistPathNode);
     }
 }
-
 
 /* Print nodes at a current level */
-void printCurrentLevel(tNode* root, int level)
+void printCurrentLevel(tNode *root, int level)
 {
     if (root == NULL)
         return;
-    if (level == 0 ){
-        if (root->parent != NULL){
+    if (level == 0)
+    {
+        if (root->parent != NULL)
+        {
             if (root->parent->curState == A)
-                printf("A->"); 
+                printf("A->");
             if (root->parent->curState == B)
-                printf("B->"); 
+                printf("B->");
             if (root->parent->curState == C)
-                printf("C->"); 
+                printf("C->");
             if (root->parent->curState == D)
                 printf("D->");
-
         }
 
         if (root->curState == A)
-            printf("A"); 
+            printf("A");
         if (root->curState == B)
-            printf("B"); 
+            printf("B");
         if (root->curState == C)
-            printf("C"); 
+            printf("C");
         if (root->curState == D)
-            printf("D"); 
+            printf("D");
 
-        printf("(%s, %d)  |%d| ", root->correctedBits, root->receivedBit,root->pathError);
+        printf("(%s, %d)  |%d| ", root->correctedBits, root->receivedBit, root->pathError);
     }
-    else if (level > 0) {
+    else if (level > 0)
+    {
         printCurrentLevel(root->left, level - 1);
         printCurrentLevel(root->right, level - 1);
     }
 }
 /****/
 
-void getFullMessageDecoded(tNode* leaf){
+void getFullMessageDecoded(tNode *leaf)
+{
     if (leaf->parent == NULL)
-        return; 
-    else {
-        printf("%s ",leaf->parent->correctedBits); 
-        getFullMessageDecoded(leaf->parent); 
+        return;
+    else
+    {
+        printf("%s ", leaf->parent->correctedBits);
+        getFullMessageDecoded(leaf->parent);
     }
 }
 /****/

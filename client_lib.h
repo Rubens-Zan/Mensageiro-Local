@@ -1,5 +1,5 @@
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#ifndef _CLIENT_LIB_H_
+#define _CLIENT_LIB_H_
 
 #include "cliente.h"
 #include <stdio.h>
