@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "cliente.h"
-#include "utils.h"
-#include "ConexaoRawSocket.h"
-
-int sequencia_global = 1;
+#include "client_lib.h"
 
 int main()
 {
@@ -30,7 +24,7 @@ int main()
             break;
         case FIM_PROGRAMA:
             // state_end(client);
-            return;
+            return 1;
             break;
         default:
             break;

@@ -1,20 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <sys/types.h>
-// #include <linux/types.h>
-
-#include <sys/socket.h>
-// #include <linux/socket.h>
-
-#include "ConexaoRawSocket.h"
+#include "error_handle.h"
 #include "server_lib.h"
-#include "generate-message.h"
-
-#define TAM_BUF 100
-
-int sequencia_global = 1;
 
 int main()
 {

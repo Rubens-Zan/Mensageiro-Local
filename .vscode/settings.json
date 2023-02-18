@@ -6,7 +6,19 @@
         "locale.h": "c",
         "types.h": "c",
         "socket.h": "c",
-        "conexaorawsocket.h": "c"
+        "conexaorawsocket.h": "c",
+        "generate-message.h": "c",
+        "error-handle.h": "c",
+        "utils.h": "c",
+        "cliente.h": "c",
+        "termios.h": "c",
+        "wchar.h": "c",
+        "stat.h": "c",
+        "client_lib.h": "c",
+        "server.h": "c",
+        "error_handle.h": "c",
+        "server_lib.h": "c",
+        "system_error": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -1,9 +1,12 @@
 #ifndef _SERVER_LIB_H_
 #define _SERVER_LIB_H_
 
-#include "cliente.h"
-#include <stdio.h>
-#include "utils.h"
+#include "error_handle.h"
+#include "client_lib.h"
+
+#define ESC 27
+// #define ENTER 13
+#define ENTER 10
 
 #define TIMEOUT 1000*3
 #define TIMEOUT_RETURN 2

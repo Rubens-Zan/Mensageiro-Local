@@ -6,18 +6,13 @@
 CFLAGS =
 #-lncurses
 
-MODULOS = client_lib \
-	server_lib \
-	binary-tree \
-	list \
-	generate-message \
-	error-handle \
-	ConexaoRawSocket
-
+MODULOS = error_handle \
+	client_lib \
+	server_lib
 
 OBJETOS = $(addsuffix .o,$(MODULOS)) 
 
-ALVOS =  servidor cliente 
+ALVOS =  client server
 
 .PHONY : all clean purge debug
 
@@ -26,17 +21,16 @@ all : $(ALVOS)
 debug: CFLAGS += -DDEBUG
 debug: $(PROG)
 
-servidor: $(OBJETOS)
-	gcc -o $@ $(OBJETOS) servidor.c $(CFLAGS)
-	
-cliente: $(OBJETOS)
-	gcc -o $@ $(OBJETOS) cliente.c $(CFLAGS)
+client: $(OBJETOS)
+	gcc -o $@ $(OBJETOS) client.c $(CFLAGS)
 
+server: $(OBJETOS)
+	gcc -o $@ $(OBJETOS) server.c $(CFLAGS)
 
 clean : 
 	$(RM) $(OBJETOS)
 
 purge:  clean
-	$(RM) $(OBJETOS) cliente servidor
+	$(RM) $(OBJETOS) client server
 	@rm -f *.o core a.out
 
