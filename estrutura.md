@@ -7,12 +7,8 @@ client_lib
 client
 
 Lib para correção de erros: 
-error-handle
-generate-message -> error-handle
-list -> error-handle
-binary-tree -> error-handle
+general
 
 Servidor e Cliente usam:
-utils
-generate-message -> error-handle
-ConexaoRawSocket -> utils
+general
+

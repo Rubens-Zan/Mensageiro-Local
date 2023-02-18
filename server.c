@@ -1,4 +1,4 @@
-#include "server_lib.h"
+#include "./server_lib/server_lib.h"
 
 int sequencia_global = 1;
 

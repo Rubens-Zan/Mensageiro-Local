@@ -24,17 +24,17 @@ client: $(OBJ_CLIENT)
 server: $(OBJ_SERVER)
 	gcc -o server $(CFLAGS) $(OBJ_SERVER)
 
-general.o: general.c
-	gcc $(CFLAGS) -c general.c
+general.o: ./general/general.c
+	gcc $(CFLAGS) -c ./general/general.c
 
-server_lib.o: server_lib.c
-	gcc $(CFLAGS) -c server_lib.c
+server_lib.o: ./server_lib/server_lib.c
+	gcc $(CFLAGS) -c ./server_lib/server_lib.c
 
 server.o: server.c
 	gcc $(CFLAGS) -c server.c
 
-client_lib.o: client_lib.c
-	gcc $(CFLAGS) -c client_lib.c
+client_lib.o: ./client_lib/client_lib.c
+	gcc $(CFLAGS) -c ./client_lib/client_lib.c
 
 client.o: client.c
 	gcc $(CFLAGS) -c client.c

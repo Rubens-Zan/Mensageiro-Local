@@ -1,4 +1,4 @@
-#include "server_lib.h"
+#include "./server_lib.h"
 
 int recebeMensagemServerLoop(int soquete, msgT *mensagem)
 {

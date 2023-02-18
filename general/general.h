@@ -1,6 +1,6 @@
 #ifndef _GENERAL_H_
 #define _GENERAL_H_
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,57 +22,59 @@
 // #define ENTER 13
 #define ENTER 10
 #define ESC 27
-#define TIMEOUT 1000*3
+#define TIMEOUT 1000 * 3
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
 
 #define TAM_BUF 100
 #define TAM_MAX_DADOS 64
 #define MARC_INICIO 0x7e
-#define BITTOINT(bitRepresentation)  (bitRepresentation - '0')
-#define INTTOBIT(intBit)  (intBit + '0')
-#define HANNINGDISTANCE(receivedBit,testedBit,packageSize) (return strncmp(receivedBit,testedBit, packageSize))
+#define BITTOINT(bitRepresentation) (bitRepresentation - '0')
+#define INTTOBIT(intBit) (intBit + '0')
+#define HANNINGDISTANCE(receivedBit, testedBit, packageSize) (return strncmp(receivedBit, testedBit, packageSize))
 
 extern int sequencia_global;
 
-typedef unsigned char bit;  
+typedef unsigned char bit;
 
 typedef struct msgT
 {
-    bit marc_inicio:8;    //Marcador de início
-    bit tam_msg:6;       //Tamanho da mensagem
-    bit sequencia:4;      //Número da mensagem (até 16)
-    bit tipo:6;           //Tipo da mensagem
-    bit dados[64];         //Buffer dos dados [64]
-    bit paridade:8;       //Paridade
+    bit marc_inicio : 8; // Marcador de início
+    bit tam_msg : 6;     // Tamanho da mensagem
+    bit sequencia : 4;   // Número da mensagem (até 16)
+    bit tipo : 6;        // Tipo da mensagem
+    bit dados[64];       // Buffer dos dados [64]
+    bit paridade : 8;    // Paridade
 } msgT;
 
-typedef enum {
+typedef enum
+{
     A, //= 00,
     B, //= 01,
     C, //= 10,
     D  //= 11
 } typesState;
 
-typedef enum {
-    TEXTO=0x01,  // texto: 0x01, 000001 
-    MIDIA=0x10,  // mídia: 0x10, 100000 
-    ACK=  0x0A,  // ack: 0x0A, 001010 
-    NACK=0x00,   // nack: 0x00, 000000 
-    ERRO=0x1E,   // erro: 0x1E, 011110 
-    INIT=0x1D,   // inicio de transmissão: 0x1D, 011101 
-    END=0x0F,    // fim de transmissão: 0x0F, 001111 
-    DADOS=0x0D   // dados: 0x0D, 001101 
-} typesMessage; 
+typedef enum
+{
+    TEXTO = 0x01, // texto: 0x01, 000001
+    MIDIA = 0x10, // mídia: 0x10, 100000
+    ACK = 0x0A,   // ack: 0x0A, 001010
+    NACK = 0x00,  // nack: 0x00, 000000
+    ERRO = 0x1E,  // erro: 0x1E, 011110
+    INIT = 0x1D,  // inicio de transmissão: 0x1D, 011101
+    END = 0x0F,   // fim de transmissão: 0x0F, 001111
+    DADOS = 0x0D  // dados: 0x0D, 001101
+} typesMessage;
 
 typedef struct tNode tNode;
 struct tNode
 {
-    bit receivedBit;     // {1,0}
-    bit correctedBits[3];  // "XY"
-    typesState curState; // {A,B,C,D}
-    tNode *parent; // Parent node
-    tNode *left, *right; // Next path, being left if input is 0 and right 1
+    bit receivedBit;             // {1,0}
+    bit correctedBits[3];        // "XY"
+    typesState curState;         // {A,B,C,D}
+    tNode *parent;               // Parent node
+    tNode *left, *right;         // Next path, being left if input is 0 and right 1
     unsigned int shouldContinue; // determine if this path should be continued or not
     unsigned int pathError;
 };
@@ -81,13 +83,13 @@ typedef struct tListNode tListNode;
 
 struct tListNode
 {
-    tNode *value;       
-    tListNode *next; 
+    tNode *value;
+    tListNode *next;
 };
 
 /**********************ERROR*****************************************************************************************/
 
-bit * viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned int msgSize);
+bit *viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned int msgSize);
 
 /**
  * @brief Get the next state object
@@ -101,32 +103,31 @@ bit * viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned i
  * @param receivedBit{0,1} - Received bit
  * @param nextState{A,B,C,D} - Next state of the path
  */
-void getNextState(typesState curState,unsigned int receivedBit,tNode *nextNode); 
+void getNextState(typesState curState, unsigned int receivedBit, tNode *nextNode);
 
 /**********************END_ERROR*****************************************************************************************/
 
 /**********************BINARY_TREE*******************************************************************************************/
 
-void free_binary_tree(tNode *root); 
+void free_binary_tree(tNode *root);
 unsigned int countNodes(tNode *n);
-tNode *startNode(unsigned int curPathError,unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode);
-unsigned int height(tNode *p); 
+tNode *startNode(unsigned int curPathError, unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode);
+unsigned int height(tNode *p);
 void emordem(tNode *no);
-void printLevelOrder(tNode* root);
-void printCurrentLevel(tNode* root, int level); 
-void getNextStep(tNode* root, unsigned int packetSize);
-void getNextLeafOnLevel(tNode* root, int level,unsigned int packetSize, unsigned int height);
-void getListLeafsHannigPathDistance(tNode* root, int level,unsigned int packetSize, unsigned int height, tNode** minHanningDistPathNode); 
-void getFullMessageDecoded(tNode* leaf);
+void printLevelOrder(tNode *root);
+void printCurrentLevel(tNode *root, int level);
+void getNextStep(tNode *root, unsigned int packetSize);
+void getNextLeafOnLevel(tNode *root, int level, unsigned int packetSize, unsigned int height);
+void getListLeafsHannigPathDistance(tNode *root, int level, unsigned int packetSize, unsigned int height, tNode **minHanningDistPathNode);
+void getFullMessageDecoded(tNode *leaf);
 
 /**********************END_BINARY_TREE*******************************************************************************************/
 
-
 /**********************GENERATE_MESSAGE**********************************************************************************/
 
-bit calculaParidade(bit *conteudo,unsigned int tam); 
-void trellisEncode(bit *encodedMessage,bit *originalMessage, unsigned int size);
-void initMessage(msgT *mensagem,bit *originalMessage, unsigned int size,typesMessage msgType, unsigned int sequencia); 
+bit calculaParidade(bit *conteudo, unsigned int tam);
+void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size);
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, unsigned int sequencia);
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
 
@@ -135,11 +136,10 @@ void initMessage(msgT *mensagem,bit *originalMessage, unsigned int size,typesMes
 void insertfirst(tNode *element, tListNode **head);
 unsigned int listSize(tListNode *head);
 void prnList(tListNode *head);
-bit * getDecodedMessage(tListNode *head, unsigned int decodedMsgSize);
-void deleteList(tListNode** head_ref);
+bit *getDecodedMessage(tListNode *head, unsigned int decodedMsgSize);
+void deleteList(tListNode **head_ref);
 
 /**********************END_LIST**************************************************************************************************/
-
 
 /**********************UTILS*****************************************************************************************************/
 
@@ -149,6 +149,5 @@ int ConexaoRawSocket(char *device);
 /**********************END_UTILS*****************************************************************************************************/
 
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout);
-
 
 #endif

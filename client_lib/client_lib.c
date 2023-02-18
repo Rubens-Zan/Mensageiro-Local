@@ -1,4 +1,4 @@
-#include"client_lib.h"
+#include "./client_lib.h"
 
 unsigned int getNextPressedChar()
 {
@@ -57,7 +57,7 @@ char *append(char *str, unsigned int shifQt)
     return str;
 }
 
-void getStringAsBinary(bit *messageS,unsigned int *s, unsigned int tam, unsigned int binaryTam)
+void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam)
 {
     // A small 9 characters buffer we use to perform the conversion
     unsigned char output[binaryTam + 1];
@@ -68,7 +68,7 @@ void getStringAsBinary(bit *messageS,unsigned int *s, unsigned int tam, unsigned
         bit *myConvertedNumb = convertToBin(s[i], binaryTam);
         strncpy(&messageS[curPos], myConvertedNumb, binaryTam);
         curPos += binaryTam;
-        free(myConvertedNumb); 
+        free(myConvertedNumb);
     }
     messageS[curPos] = '\0';
 }
@@ -112,7 +112,7 @@ void state_init(tCliente *client)
             scanf("%63[^\n]", filename_c);
             getchar();
 
-            printf("ARQ %s", filename_c); 
+            printf("ARQ %s", filename_c);
             // filename_c = strtok(buffer_c, " ");
             // filename_c = strtok(NULL, " ");
             client->estado = ENVIA_ARQUIVO;
@@ -126,7 +126,7 @@ void state_init(tCliente *client)
     }
 }
 
-void state_create_message(int soquete,tCliente *client)
+void state_create_message(int soquete, tCliente *client)
 {
     unsigned int char_code;
     unsigned int buffer_c[BUFFER_GIGANTE];
@@ -144,36 +144,36 @@ void state_create_message(int soquete,tCliente *client)
         else if (char_code == ENTER)
         {
             // TODO
-            // MANDAR MENSAGEM DE INICIO 
+            // MANDAR MENSAGEM DE INICIO
 
             // FAZER UM WHILE(1) AQUI PARA FAZER O PARA E ESPERA
             msgT mensagem;
-            int inicio_mensagem=0;
+            int inicio_mensagem = 0;
             // VERIFICAR RETORNO DE ACK/NACK
-                unsigned int totalBitsMsg = currentBufferPosition * 8; // como sao UTF-8 vao utilizar 8 bits para cada wide char 
-                bit auxString[64];
-                unsigned int remainingSize = currentBufferPosition;
-                printf("\nMENSAGEM A SER ENVIADA: \n");
-                for (unsigned int i = 0; i < currentBufferPosition; ++i)
-                    printf("%d ", buffer_c[i]);
+            unsigned int totalBitsMsg = currentBufferPosition * 8; // como sao UTF-8 vao utilizar 8 bits para cada wide char
+            bit auxString[64];
+            unsigned int remainingSize = currentBufferPosition;
+            printf("\nMENSAGEM A SER ENVIADA: \n");
+            for (unsigned int i = 0; i < currentBufferPosition; ++i)
+                printf("%d ", buffer_c[i]);
 
-                printf("\n");
+            printf("\n");
 
-                // memcpy(auxString, buffer_c + inicio_mensagem, 8); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
-                // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
-                // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
-                // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
-                bit myBinaryMsg[9]; 
-                getStringAsBinary(myBinaryMsg,buffer_c, currentBufferPosition, 8);
-                initMessage(client->message,myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
-                incrementaSequencia(); 
-                printf("myBinaryMsg %s \n", client->message->dados);
-                // MANDAR A MENSAGEM CRIADA 
-                // SE CONSEGUI MANDAR ATE O FINAL 
+            // memcpy(auxString, buffer_c + inicio_mensagem, 8); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+            // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
+            // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
+            // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
+            bit myBinaryMsg[9];
+            getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+            initMessage(client->message, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+            incrementaSequencia();
+            printf("myBinaryMsg %s \n", client->message->dados);
+            // MANDAR A MENSAGEM CRIADA
+            // SE CONSEGUI MANDAR ATE O FINAL
 
-            // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM 
+            // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
 
-            client->estado = INICIO; 
+            client->estado = INICIO;
             return;
         }
         else
@@ -205,7 +205,7 @@ void state_send_file(int soquete, FILE *arq)
         while (!ack)
         {
             // if (! sendMessage (soquete, &mensagem, 0))
-                // perror("Erro ao enviar mensagem no put_dados");
+            // perror("Erro ao enviar mensagem no put_dados");
             printf("dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
             // switch (recebe_retorno(soquete, &mensagem)) {
 
@@ -247,20 +247,22 @@ void state_end(tCliente *client)
 }
 
 /**FIM ESTADOS DO CLIENTE*/
-typesMessage recebeRetorno(int soquete, msgT *mensagem){
+typesMessage recebeRetorno(int soquete, msgT *mensagem)
+{
     msgT mensagem_aux;
 
-	mensagem_aux.tam_msg= mensagem->tam_msg;
-	mensagem_aux.tipo		= mensagem->tipo;
-	memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
-	
-    while (1) {
-        // Recebe uma mensagem
-		int retorno_func = recebe_mensagem (soquete, mensagem, 1);
+    mensagem_aux.tam_msg = mensagem->tam_msg;
+    mensagem_aux.tipo = mensagem->tipo;
+    memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
 
-        if (retorno_func == 0) 
+    while (1)
+    {
+        // Recebe uma mensagem
+        int retorno_func = recebe_mensagem(soquete, mensagem, 1);
+
+        if (retorno_func == 0)
             perror("Erro ao receber mensagem no recebe_retorno");
-        
+
         // Verifica se o marcador de início e a paridade são os corretos
         // if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN)) {
         //     //Testa a paridade
@@ -268,40 +270,39 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem){
 
         //         //se for um NACK, reenvia a mensagem
         //         if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN)){
-		// 			if (retorno_func == TIMEOUT_RETURN)
-		// 				perror ("Timout");
+        // 			if (retorno_func == TIMEOUT_RETURN)
+        // 				perror ("Timout");
 
         //             //aqui nao damos return pro laço recomeçar e esperar mais uma resposta
         //             char buffer_aux[TAM_MAX_DADOS];
 
-		// 			memset(buffer_aux, 0, TAM_MAX_DADOS);
+        // 			memset(buffer_aux, 0, TAM_MAX_DADOS);
         //             memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
-                    
-		// 			initMessage(&mensagem_aux,buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
 
-		// 			//printf("Remandando o seguinte:\n");
-		// 			//imprime_mensagem(&mensagem_aux);
-		// 			//printf("\n");
+        // 			initMessage(&mensagem_aux,buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
+
+        // 			//printf("Remandando o seguinte:\n");
+        // 			//imprime_mensagem(&mensagem_aux);
+        // 			//printf("\n");
 
         //             if (! sendMessage (soquete, &mensagem_aux))
         //                 perror("Erro ao re-mandar mensagem no recebe_retorno_put");
         //         }
 
-        //         // Senão retorna o tipo    
+        //         // Senão retorna o tipo
         //         else {
         //             return mensagem->tipo;
         //         }
-            
+
         //     }
         //     else{
         //     //retorna NACK para mensagens com erro no marcador ou na paridade
         //         mandaRetorno(0,soquete);
-        //     }    
+        //     }
         // }
         // else {
         //     mandaRetorno(1,soquete);
         // }
-		
     }
 }
 
@@ -336,9 +337,3 @@ void incrementaSequencia()
     else
         sequencia_global = 1;
 }
-
-
-
-
-
-
