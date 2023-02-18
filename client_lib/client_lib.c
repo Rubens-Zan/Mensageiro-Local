@@ -163,14 +163,18 @@ void state_create_message(int soquete, tCliente *client)
             // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
             // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
             // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
-            bit myBinaryMsg[9];
+            bit myBinaryMsg[BUFFER_GIGANTE];
             getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
-            initMessage(client->message, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+            initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
             incrementaSequencia();
-            printf("myBinaryMsg %s \n", client->message->dados);
+            printf("myBinaryMsg %s %d\n", mensagem.dados,mensagem.sequencia);
             // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
-
+            if(sendMessage(soquete, &mensagem))
+                printf("consegui mandar");
+            else {
+                printf("nao consegui mandar");
+            }
             // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
 
             client->estado = INICIO;

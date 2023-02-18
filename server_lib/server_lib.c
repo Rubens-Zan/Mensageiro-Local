@@ -8,7 +8,7 @@ int recebeMensagemServerLoop(int soquete, msgT *mensagem)
         // 0=DESLIGADO, POIS NAO DEVE DAR TIMEOUT QUANDO VAI RECEBER A PRIMEIRA MENSAGEM
         int retorno_func = recebe_mensagem(soquete, mensagem, 0);
         if (retorno_func == 1)
-            printf("retorno_func %s \n", mensagem->tipo);
+            printf("retorno_func tem algo \n");
         // if (retorno_func == 0)
         //     perror("Erro ao receber mensagem no recebe_retorno");
         // else if (retorno_func == TIMEOUT_RETURN)

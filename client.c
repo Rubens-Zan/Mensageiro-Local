@@ -7,7 +7,7 @@ int main()
 
     tCliente *client = (tCliente *)malloc(sizeof(tCliente));
     int soquete = ConexaoRawSocket("lo");
-
+    FILE *file;
     client->estado = INICIO;
 
     while (1)
@@ -21,7 +21,7 @@ int main()
             state_create_message(soquete, client);
             break;
         case ENVIA_ARQUIVO:
-            FILE *file = fopen(client->fileName, "rb");
+            file = fopen(client->fileName, "rb");
             state_send_file(soquete, file);
             break;
         case FIM_PROGRAMA:
