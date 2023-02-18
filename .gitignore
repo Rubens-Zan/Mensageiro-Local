@@ -1,5 +1,0 @@
-.gitignore
-.vscode
-*.o
-client
-server
