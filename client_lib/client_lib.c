@@ -171,9 +171,9 @@ void state_create_message(int soquete, tCliente *client)
             // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
             if(sendMessage(soquete, &mensagem))
-                printf("consegui mandar");
+                printf("Mensagem Enviada!\n");
             else {
-                printf("nao consegui mandar");
+                printf("Mensagem não enviada!\n");
             }
             // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
 

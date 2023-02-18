@@ -563,6 +563,8 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
         fds.events = POLLIN;
 
         int retorno_poll = poll(&fds, 1, TIMEOUT);
+        if(retorno_poll)
+            printf("\nretorno_poll = %d\n", retorno_poll);
 
         if (timeout)
         {
@@ -576,10 +578,10 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
         {
             return 0;
         }
-        else if (retorno_poll > 0)
+        else if (retorno_poll == 1)
         {
             // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
-            printf(" dados: %s\n\n",mensagem->dados);
+            printf("dados: %s\n",mensagem->dados);
             return 1; // adicionar?
         }
     }
