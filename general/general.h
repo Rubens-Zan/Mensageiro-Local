@@ -127,7 +127,7 @@ void getFullMessageDecoded(tNode *leaf);
 
 bit calculaParidade(bit *conteudo, unsigned int tam);
 void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size);
-void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, unsigned int sequencia);
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia);
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
 

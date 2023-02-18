@@ -222,14 +222,14 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
     return aux;
 }
 
-void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, unsigned int sequencia)
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
     trellisEncode(mensagem->dados, originalMessage, size);
     mensagem->paridade = calculaParidade(mensagem->dados, size);
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
     mensagem->tam_msg = strlen(mensagem->dados); // duplica por causa da modulção da trelica
-    mensagem->sequencia = sequencia_global;
+    mensagem->sequencia = sequencia;
 }
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
@@ -554,6 +554,9 @@ int ConexaoRawSocket(char *device)
 
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
 {
+    msgT mensagemAux; 
+    initMessage(&mensagemAux, "0", 1,INIT, 666);
+
     while (1)
     {
         // cuida do timeout
@@ -574,15 +577,26 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
                 return 0;
         }
 
-        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
+
+        if (recv(soquete, &mensagemAux, sizeof(msgT), 0) < 0)
         {
             return 0;
         }
-        else if (retorno_poll == 1)
-        {
+        else if (mensagemAux.sequencia == sequencia_global){
+            printf("sao igausi %d %d\n", mensagemAux.sequencia,sequencia_global);
+
             // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
-            printf("dados: %s\n",mensagem->dados);
+            printf("seq: %d %s\n",mensagemAux.sequencia, mensagemAux.dados);
+
             return 1; // adicionar?
         }
     }
+}
+
+void incrementaSequencia()
+{
+    if (sequencia_global < 15)
+        sequencia_global++;
+    else
+        sequencia_global = 1;
 }

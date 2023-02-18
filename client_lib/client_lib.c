@@ -334,10 +334,4 @@ FILE *abre_arquivo(char *nome_arquivo, char *modo)
     return arq;
 }
 
-void incrementaSequencia()
-{
-    if (sequencia_global < 15)
-        sequencia_global++;
-    else
-        sequencia_global = 1;
-}
+
