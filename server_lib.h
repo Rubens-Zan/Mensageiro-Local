@@ -3,6 +3,7 @@
 
 #include "cliente.h"
 #include <stdio.h>
+#include "utils.h"
 
 #define TIMEOUT 1000*3
 #define TIMEOUT_RETURN 2

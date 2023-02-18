@@ -16,5 +16,5 @@ int recebe_mensagem (int soquete, msgT *mensagem, int timeout);
 int recebeMensagemServerLoop(int soquete, msgT *mensagem); 
 void getStringAsBinary(bit *messageS,unsigned int *s, unsigned int tam, unsigned int binaryTam);
 void incrementaSequencia(); 
-int sendMessage(int soquete, msgT *mensagem); 
+
 #endif

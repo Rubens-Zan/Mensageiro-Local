@@ -6,7 +6,7 @@
 
 int sequencia_global = 1;
 
-void main()
+int main()
 {
 
     tCliente *client = (tCliente *)malloc(sizeof(tCliente));
@@ -38,4 +38,6 @@ void main()
     }
 
     free(client);
+
+    return 1;
 }

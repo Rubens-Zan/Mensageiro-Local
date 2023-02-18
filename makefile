@@ -21,10 +21,10 @@ ALVOS =  servidor cliente
 
 .PHONY : all clean purge debug
 
+all : $(ALVOS)
+
 debug: CFLAGS += -DDEBUG
 debug: $(PROG)
-
-all : $(ALVOS)
 
 servidor: $(OBJETOS)
 	gcc -o $@ $(OBJETOS) servidor.c $(CFLAGS)

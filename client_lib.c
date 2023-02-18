@@ -17,6 +17,7 @@
 #include <poll.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "utils.h"
 
 #define ESC 27
 // #define ENTER 13
@@ -361,13 +362,6 @@ void incrementaSequencia()
 
 
 
-int sendMessage(int soquete, msgT *mensagem){
-    if (send(soquete, mensagem, sizeof(msgT), 0) < 0){
-        return 0;
-	}else{
-        // error sending message... 
-        return 1;
-    }
- }
+
 
 
