@@ -1,5 +1,7 @@
 #include "client_lib.h"
 
+int sequencia_global = 1;
+
 int main()
 {
 

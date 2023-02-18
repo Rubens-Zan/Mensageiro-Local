@@ -1,5 +1,6 @@
-#include "error_handle.h"
 #include "server_lib.h"
+
+int sequencia_global = 1;
 
 int main()
 {

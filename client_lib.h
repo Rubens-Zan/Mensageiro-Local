@@ -1,7 +1,8 @@
 #ifndef _CLIENT_LIB_H_
 #define _CLIENT_LIB_H_
 
-#include "error_handle.h"
+#include "general.h"
+#include "server_lib.h"
 
 // #define ENTER 13
 #define ENTER 10

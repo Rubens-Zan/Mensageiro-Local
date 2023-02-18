@@ -1,4 +1,4 @@
-#include "error_handle.h"
+#include "general.h"
 
 /**********************ERROR*****************************************************************************************/
 
@@ -547,3 +547,36 @@ int sendMessage(int soquete, msgT *mensagem){
 }
 
 /**********************END_UTILS*****************************************************************************************************/
+
+int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
+{
+    while (1)
+    {
+        // cuida do timeout
+        struct pollfd fds;
+
+        fds.fd = soquete;
+        fds.events = POLLIN;
+
+        int retorno_poll = poll(&fds, 1, TIMEOUT);
+
+        if (timeout)
+        {
+            if (retorno_poll == 0)
+                return TIMEOUT_RETURN;
+            else if (retorno_poll < 0)
+                return 0;
+        }
+
+        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
+        {
+            return 0;
+        }
+        else if (retorno_poll > 0)
+        {
+            // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
+            printf("recebeu marc: %s tipo %d e sequencia %d dados: %s\n\n", mensagem->marc_inicio, mensagem->tipo, mensagem->sequencia, mensagem->dados);
+            return 1; // adicionar?
+        }
+    }
+}

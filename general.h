@@ -1,5 +1,5 @@
-#ifndef _ERROR_HANDLE_H_
-#define _ERROR_HANDLE_H_
+#ifndef _GENERAL_H_
+#define _GENERAL_H_
  
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +19,12 @@
 #include <dirent.h>
 #include <poll.h>
 
+// #define ENTER 13
+#define ENTER 10
+#define ESC 27
+#define TIMEOUT 1000*3
+#define TIMEOUT_RETURN 2
+#define BUFFER_GIGANTE 65536
 
 #define TAM_BUF 100
 #define TAM_MAX_DADOS 64
@@ -141,5 +147,8 @@ int sendMessage(int soquete, msgT *mensagem);
 int ConexaoRawSocket(char *device);
 
 /**********************END_UTILS*****************************************************************************************************/
+
+int recebe_mensagem(int soquete, msgT *mensagem, int timeout);
+
 
 #endif
