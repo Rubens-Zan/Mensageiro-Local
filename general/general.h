@@ -27,7 +27,7 @@
 #define BUFFER_GIGANTE 65536
 
 #define TAM_BUF 100
-#define TAM_MAX_DADOS 64
+#define TAM_MAX_DADOS 512
 #define MARC_INICIO 0x7e
 #define BITTOINT(bitRepresentation) (bitRepresentation - '0')
 #define INTTOBIT(intBit) (intBit + '0')
@@ -43,7 +43,7 @@ typedef struct msgT
     bit tam_msg : 6;     // Tamanho da mensagem
     bit sequencia : 4;   // Número da mensagem (até 16)
     bit tipo : 6;        // Tipo da mensagem
-    bit dados[64];       // Buffer dos dados [64]
+    bit dados[512];       // Buffer dos dados [64bytes]
     bit paridade : 8;    // Paridade
 } msgT;
 

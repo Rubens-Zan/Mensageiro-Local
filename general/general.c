@@ -224,7 +224,10 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
 
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
+    printf("pre encoded message; %s\n", originalMessage);
+
     trellisEncode(mensagem->dados, originalMessage, size);
+    printf("encoded message; %s \n", mensagem->dados);
     mensagem->paridade = calculaParidade(mensagem->dados, size);
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
@@ -584,10 +587,10 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
         }
         else if (mensagemAux.sequencia == sequencia_global){
             printf("sao igausi %d %d\n", mensagemAux.sequencia,sequencia_global);
-
+            // viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg);
             // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
-            printf("seq: %d %s\n",mensagemAux.sequencia, mensagemAux.dados);
-
+            // printf("seq: %d %s\n",mensagemAux.sequencia, mensagemAux.dados);
+            printf("%ls \n",viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg)); 
             return 1; // adicionar?
         }
     }
