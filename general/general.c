@@ -590,7 +590,7 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
             // viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg);
             // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
             // printf("seq: %d %s\n",mensagemAux.sequencia, mensagemAux.dados);
-            printf("%ls \n",viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg)); 
+            printf("viterbi %s \n",viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg)); 
             return 1; // adicionar?
         }
     }
