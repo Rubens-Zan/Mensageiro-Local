@@ -1,5 +1,25 @@
 #include "./general.h"
 
+int mandaRetorno(int isAck, int soquete, int sequencia)
+{
+    msgT mensagem;
+    if (isAck)
+    {
+        initMessage(&mensagem, NULL, 1, ACK, sequencia);
+    }
+    else
+    {
+        initMessage(&mensagem, NULL, 1, ACK, sequencia);
+    }
+    if (!sendMessage(soquete, &mensagem))
+    {
+        perror("Erro ao enviar mensagem de retorno");
+        return -1;
+    }
+    return 0;
+}
+
+
 /**********************ERROR*****************************************************************************************/
 
 void getNextState(typesState curState, unsigned int receivedBit, tNode *nextNode)

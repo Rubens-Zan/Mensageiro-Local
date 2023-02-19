@@ -45,6 +45,7 @@ typedef struct msgT
     bit tipo : 6;        // Tipo da mensagem
     bit dados[512];       // Buffer dos dados [64bytes]
     bit paridade : 8;    // Paridade
+    int numero_ack;      //número do ACK
 } msgT;
 
 typedef enum
@@ -86,6 +87,8 @@ struct tListNode
     tNode *value;
     tListNode *next;
 };
+
+int mandaRetorno(int isAck, int soquete, int sequencia);
 
 /**********************ERROR*****************************************************************************************/
 

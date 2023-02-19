@@ -6,6 +6,4 @@
 
 int recebeMensagemServerLoop(int soquete, msgT *mensagem);
 
-int mandaRetorno(int isAck, int soquete);
-
 #endif

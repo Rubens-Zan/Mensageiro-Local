@@ -19,26 +19,30 @@ unsigned int getNextPressedChar()
     return wch;
 }
 
-void getFileName(char * file){
-     struct termios original_attributes;
-  tcgetattr(STDIN_FILENO, &original_attributes);
+void getFileName(char *file)
+{
+    struct termios original_attributes;
+    tcgetattr(STDIN_FILENO, &original_attributes);
 
-  // Set the terminal to canonical mode
-  struct termios new_attributes = original_attributes;
-  new_attributes.c_lflag |= ICANON;
-  tcsetattr(STDIN_FILENO, TCSANOW, &new_attributes);
+    // Set the terminal to canonical mode
+    struct termios new_attributes = original_attributes;
+    new_attributes.c_lflag |= ICANON;
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_attributes);
 
-  // Read input from the user
-  unsigned int i =0;
-  char c; 
-  while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n') {
-    printf("Read character: %c\n", c);
-    file[i] = c;
-    ++i;
-  }
+    // Read input from the user
+    unsigned int i = 0;
+    char c;
+    printf("\nINPUT FILE: ");
+    while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n')
+    {
+        printf("%c", c);
+        file[i] = c;
+        ++i;
+    }
+    printf("\n");
 
-  // Restore the terminal's original attributes
-  tcsetattr(STDIN_FILENO, TCSANOW, &original_attributes);
+    // Restore the terminal's original attributes
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_attributes);
 }
 
 bit *convertToBin(unsigned int num, unsigned int bitsSize)
@@ -111,16 +115,16 @@ void state_init(tCliente *client)
     while (1)
     {
 
-        printf("Digite o comando <i: INSERT MESSAGE, q: QUIT, s: SEND>\n");
+        printf("Digite o comando <i: INSERT MESSAGE, q: QUIT, s: SEND FILE>\n");
         // WINDOW * myWindow = initscr();
         char_code = getNextPressedChar();
-        if (char_code == 'i')
+        if (char_code == 'i' || char_code == 'I')
         {
             printf("INSERT\n");
             client->estado = ENVIA_TEXTO;
             return;
         }
-        else if (char_code == 'q')
+        else if (char_code == 'q' || char_code == 'Q')
         {
             // scanf("%63[^\n]", buffer_c);
             // getchar();
@@ -129,10 +133,10 @@ void state_init(tCliente *client)
             client->estado = FIM_PROGRAMA;
             return;
         }
-        else if (char_code == 's')
+        else if (char_code == 's' || char_code == 'S')
         {
+            printf("SEND");
             getFileName(filename_c);
-
             client->estado = ENVIA_ARQUIVO;
             client->fileName = filename_c;
             return;
@@ -188,9 +192,10 @@ void state_create_message(int soquete, tCliente *client)
             // printf("myBinaryMsg %s %d\n", mensagem.dados,mensagem.sequencia);
             // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
-            if(sendMessage(soquete, &mensagem))
+            if (sendMessage(soquete, &mensagem))
                 printf("Mensagem Enviada!\n");
-            else {
+            else
+            {
                 printf("Mensagem não enviada!\n");
             }
             // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
@@ -209,69 +214,99 @@ void state_create_message(int soquete, tCliente *client)
 }
 
 // TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
+
 void state_send_file(int soquete, tCliente *client)
 {
-
+    int window_size = 10; // tamanho da janela deslizante
     int contador = 1;
-    printf("put_dados_cliente\n");
-
+    printf("\nARQUIVO A SER ENVIADO:\n");
+    FILE *meuArq = abre_arquivo(client->fileName, "rb");
     msgT mensagem;
-    FILE * meuArq = abre_arquivo(client->fileName, "rb");
     bit buffer_arq[TAM_MAX_DADOS];
-    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
-    while (bytes_lidos != 0)
-    {
-        // contador++;
-        // initMessage(buffer_arq, bytes_lidos, DADOS, sequencia_global);
-        // int ack = 0;
-        // while (!ack)
-        {
-            // if (! sendMessage (soquete, &mensagem, 0))
-            // perror("Erro ao enviar mensagem no put_dados");
-            printf("dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
-            // switch (recebe_retorno(soquete, &mensagem)) {
 
-            // se for ack, quebra o laço interno e vai pro laço externo pegar mais dados
-            //  case ACK:
-            // ack = 1;
-            // break;
-            // }
+    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
+    int seq_num = 0;      // número de sequência inicial
+    int last_ack_num = 0; // último número de ACK recebido
+
+    while (bytes_lidos != 0 || seq_num <= last_ack_num)
+    {
+        while ((seq_num < last_ack_num + window_size) && (bytes_lidos != 0))
+        {
+            // Envia pacote de dados com número de sequência seq_num
+            initMessage(NULL, buffer_arq, bytes_lidos, DADOS, seq_num);
+            if (!sendMessage(soquete, &mensagem))
+            {
+                perror("Erro ao enviar mensagem no put_dados");
+                // Tratar erro de envio
+            }
+            printf("dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
+            seq_num++;
+            memset(buffer_arq, 0, TAM_MAX_DADOS);
+            bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
         }
-        memset(buffer_arq, 0, TAM_MAX_DADOS);
-        bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
+
+        // Recebe ACKs e NACKs
+        while (1)
+        {
+            switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
+            {
+            case ACK:
+                if (mensagem.numero_ack > last_ack_num)
+                {
+                    last_ack_num = mensagem.numero_ack;
+                    break;
+                }
+                // else ignora ACKs repetidos
+            case NACK:
+                // Tratar resposta de NACK
+            default:
+                // Tratar outras respostas
+            }
+
+            // Sai do loop de recebimento de ACKs se todos os pacotes enviados foram confirmados
+            if (last_ack_num >= seq_num - 1)
+            {
+                break;
+            }
+        }
     }
 
-    // manda uma mensagem do tipo FIM
+    // Envia mensagem do tipo FIM
+    initMessage(&mensagem, NULL, TAM_MAX_DADOS, END, seq_num);
+    if (!sendMessage(soquete, &mensagem))
+    {
+        perror("Erro ao enviar mensagem no put_dados");
+    }
 
-    // init_mensagem(&mensagem,  sequencia_global, FIM);
-
-    // considerando que o servidor responde um FIM com um ACK
-    //  while (1){
-    //  if (! sendMessage (soquete, &mensagem, 0))
-    //  perror("Erro ao enviar mensagem no put_dados");
-
-    // switch (recebe_retorno(soquete, &mensagem)) {
-    // se for ack, acaba
-    // case ACK:
-    // printf("put_dados_cliente: recebeu um ack do server, retornando...\n");
-    // printf("Contador -> %d\n", contador);
-    fclose(meuArq);
-    client->estado = INICIO;
-    return;
-    // }
-    // }
+    // Recebe ACK para a mensagem de FIM
+    while (1)
+    {
+        switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
+        {
+        case ACK: // Terminou a transmissão com sucesso
+            printf("put_dados_cliente: recebeu um ack do server, retornando...\n");
+            printf("Contador -> %d\n", contador);
+            return;
+        case NACK: // Tratar resposta de NACK
+            printf("Recebeu NACK..\n");
+            return;
+        default: // Tratar outras respostas
+            printf("Outras Respostas..\n");
+            return;
+        }
+    }
 }
 
 void state_end(tCliente *client)
 {
     while (1)
     {
-        printf("\n state_end state");
+        printf("\nstate_end state\n");
     }
 }
 
 /**FIM ESTADOS DO CLIENTE*/
-typesMessage recebeRetorno(int soquete, msgT *mensagem)
+typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num)
 {
     msgT mensagem_aux;
 
@@ -288,45 +323,60 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem)
             perror("Erro ao receber mensagem no recebe_retorno");
 
         // Verifica se o marcador de início e a paridade são os corretos
-        // if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN)) {
-        //     //Testa a paridade
-        //     if (testa_paridade(mensagem) || (retorno_func == TIMEOUT_RETURN)) {
+        if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN))
+        {
+            // Testa a paridade
+            if (/*calculaParidade(mensagem, TAM_MAX_DADOS) || */ (retorno_func == TIMEOUT_RETURN))
+            {
+                // se for um NACK, reenvia a mensagem
+                if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN))
+                {
+                    if (retorno_func == TIMEOUT_RETURN)
+                        perror("Timeout");
 
-        //         //se for um NACK, reenvia a mensagem
-        //         if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN)){
-        // 			if (retorno_func == TIMEOUT_RETURN)
-        // 				perror ("Timout");
+                    // aqui nao damos return pro laço recomeçar e esperar mais uma resposta
+                    char buffer_aux[TAM_MAX_DADOS];
 
-        //             //aqui nao damos return pro laço recomeçar e esperar mais uma resposta
-        //             char buffer_aux[TAM_MAX_DADOS];
+                    memset(buffer_aux, 0, TAM_MAX_DADOS);
+                    memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
 
-        // 			memset(buffer_aux, 0, TAM_MAX_DADOS);
-        //             memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
+                    initMessage(&mensagem_aux, buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
 
-        // 			initMessage(&mensagem_aux,buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
+                    if (*contador >= MAX_TENTATIVAS)
+                    {
+                        return TIMEOUT;
+                    }
 
-        // 			//printf("Remandando o seguinte:\n");
-        // 			//imprime_mensagem(&mensagem_aux);
-        // 			//printf("\n");
+                    // Incrementa o contador de NACKs recebidos
+                    if (mensagem->tipo == NACK)
+                    {
+                        (*contador)++;
+                    }
 
-        //             if (! sendMessage (soquete, &mensagem_aux))
-        //                 perror("Erro ao re-mandar mensagem no recebe_retorno_put");
-        //         }
+                    // printf("Remandando o seguinte:\n");
+                    // imprime_mensagem(&mensagem_aux);
+                    // printf("\n");
 
-        //         // Senão retorna o tipo
-        //         else {
-        //             return mensagem->tipo;
-        //         }
+                    if (!sendMessage(soquete, &mensagem_aux))
+                        perror("Erro ao re-mandar mensagem no recebe_retorno_put");
+                }
 
-        //     }
-        //     else{
-        //     //retorna NACK para mensagens com erro no marcador ou na paridade
-        //         mandaRetorno(0,soquete);
-        //     }
-        // }
-        // else {
-        //     mandaRetorno(1,soquete);
-        // }
+                // Senão retorna o tipo
+                else
+                {
+                    return mensagem->tipo;
+                }
+            }
+            else
+            {
+                // retorna NACK para mensagens com erro no marcador ou na paridade
+                mandaRetorno(0, soquete, seq_num);
+            }
+        }
+        else
+        {
+            mandaRetorno(1, soquete, seq_num);
+        }
     }
 }
 
@@ -353,5 +403,3 @@ FILE *abre_arquivo(char *nome_arquivo, char *modo)
     // retorna o arquivo
     return arq;
 }
-
-

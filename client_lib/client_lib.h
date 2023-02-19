@@ -10,6 +10,7 @@
 #define TIMEOUT 1000 * 3
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
+#define MAX_TENTATIVAS 2
 
 typedef enum tState
 {
@@ -32,11 +33,9 @@ void state_create_message(int soquete, tCliente *client);
 void state_send_file(int soquete, tCliente *client);
 
 void state_end(tCliente *client);
+typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num);
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout);
-int recebeMensagemServerLoop(int soquete, msgT *mensagem);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
 void incrementaSequencia();
 FILE *abre_arquivo(char *nome_arquivo, char *modo);
-
-
 #endif

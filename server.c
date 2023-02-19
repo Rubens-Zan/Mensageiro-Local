@@ -8,7 +8,7 @@ int main()
     int soquete = ConexaoRawSocket("lo");
     // int soquete = ConexaoRawSocket("eno1");
     // int soquete = ConexaoRawSocket("enp1s0");
-    //  printf ("soquete -> %d\n", soquete);
+    printf ("soquete -> %d\n", soquete);
 
     msgT mensagem;
     printf("Server Initialized...\n");

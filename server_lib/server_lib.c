@@ -2,49 +2,58 @@
 
 int recebeMensagemServerLoop(int soquete, msgT *mensagem)
 {
+    int proxima_sequencia = 1;
+    int janela_inicio = 1;
+    int window_size = 10;
+    int janela_fim = janela_inicio + window_size - 1;
 
     while (1)
     {
-        // 0=DESLIGADO, POIS NAO DEVE DAR TIMEOUT QUANDO VAI RECEBER A PRIMEIRA MENSAGEM
-        int retorno_func = recebe_mensagem(soquete, mensagem, 0);
-        if (retorno_func == 1){
-            incrementaSequencia();
-            printf("retorno_func tem algo \n");
-        }
-        // if (retorno_func == 0)
-        //     perror("Erro ao receber mensagem no recebe_retorno");
-        // else if (retorno_func == TIMEOUT_RETURN)
-        // {
-        //     perror("Timeout");
-        //     continue;
-        // }
+        int retorno_func = recebe_mensagem(soquete, mensagem, TIMEOUT);
 
-        // if (mensagem->marc_inicio == MARC_INICIO)
-        // {
-        //     if (testa_paridade(mensagem))
-        //         return mensagem->tipo;
-        //     else
-        //         mandaRetorno(1,soquete);
-        // }
-        // else
-        //     mandaRetorno(0,soquete);
+        if (retorno_func == TIMEOUT_RETURN)
+        {
+            printf("Timeout ao receber mensagem\n");
+            continue;
+        }
+        else if (retorno_func == 0)
+        {
+            printf("Erro ao receber mensagem\n");
+            continue;
+        }
+
+        if (mensagem->tipo == DADOS)
+        {
+            if (mensagem->sequencia < proxima_sequencia || mensagem->sequencia > janela_fim)
+            {
+                printf("Mensagem fora da janela de recepção: sequencia %d\n", mensagem->sequencia);
+                continue;
+            }
+
+            printf("Recebido pacote: sequencia %d\n", mensagem->sequencia);
+
+            // processa mensagem...
+
+            // atualiza a próxima sequência esperada
+            proxima_sequencia = mensagem->sequencia + 1;
+
+            // move a janela de recepção
+            if (proxima_sequencia > janela_fim)
+            {
+                janela_inicio = proxima_sequencia;
+                janela_fim = janela_inicio + window_size - 1;
+            }
+
+            // envia ACK
+            mandaRetorno(ACK, soquete, mensagem->sequencia);
+        }
+        else if (mensagem->tipo == END)
+        {
+            printf("Recebido pacote de fim\n");
+            mandaRetorno(ACK, soquete, mensagem->sequencia);
+            return END;
+        }
     }
 }
 
-int mandaRetorno(int isAck, int soquete)
-{
-    char *msg = "";
-    msgT mensagem;
-    // if (isAck){
-    //     initMessage(&mensagem, 0, sequencia_global, NACK, msg);
-    //     if( ! sendMessage (soquete, &mensagem)) {
-    //         perror("Erro ao mandar nack");
-    //     }
 
-    // }else {
-    //     initMessage(&mensagem, 0, sequencia_global, ACK, msg);
-    //     if( ! sendMessage (soquete, &mensagem)) {
-    //         perror("Erro ao mandar ack");
-    //     }
-    // }
-}
