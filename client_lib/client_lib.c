@@ -19,6 +19,28 @@ unsigned int getNextPressedChar()
     return wch;
 }
 
+void getFileName(char * file){
+     struct termios original_attributes;
+  tcgetattr(STDIN_FILENO, &original_attributes);
+
+  // Set the terminal to canonical mode
+  struct termios new_attributes = original_attributes;
+  new_attributes.c_lflag |= ICANON;
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_attributes);
+
+  // Read input from the user
+  unsigned int i =0;
+  char c; 
+  while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n') {
+    printf("Read character: %c\n", c);
+    file[i] = c;
+    ++i;
+  }
+
+  // Restore the terminal's original attributes
+  tcsetattr(STDIN_FILENO, TCSANOW, &original_attributes);
+}
+
 bit *convertToBin(unsigned int num, unsigned int bitsSize)
 {
     bit *convertedNumb = (bit *)malloc((bitsSize + 1) * sizeof(bit));
@@ -83,7 +105,7 @@ void state_init(tCliente *client)
     // s: Envia arquivo x.
     // q: Sai do programa.
     char buffer_c[100];
-    char *filename_c;
+    char filename_c[50];
     char char_code;
 
     while (1)
@@ -109,12 +131,8 @@ void state_init(tCliente *client)
         }
         else if (char_code == 's')
         {
-            scanf("%63[^\n]", filename_c);
-            getchar();
+            getFileName(filename_c);
 
-            printf("ARQ %s", filename_c);
-            // filename_c = strtok(buffer_c, " ");
-            // filename_c = strtok(NULL, " ");
             client->estado = ENVIA_ARQUIVO;
             client->fileName = filename_c;
             return;
@@ -191,22 +209,22 @@ void state_create_message(int soquete, tCliente *client)
 }
 
 // TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
-void state_send_file(int soquete, FILE *arq)
+void state_send_file(int soquete, tCliente *client)
 {
 
     int contador = 1;
     printf("put_dados_cliente\n");
 
     msgT mensagem;
-
+    FILE * meuArq = abre_arquivo(client->fileName, "rb");
     bit buffer_arq[TAM_MAX_DADOS];
-    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, arq);
+    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
     while (bytes_lidos != 0)
     {
-        contador++;
+        // contador++;
         // initMessage(buffer_arq, bytes_lidos, DADOS, sequencia_global);
-        int ack = 0;
-        while (!ack)
+        // int ack = 0;
+        // while (!ack)
         {
             // if (! sendMessage (soquete, &mensagem, 0))
             // perror("Erro ao enviar mensagem no put_dados");
@@ -215,12 +233,12 @@ void state_send_file(int soquete, FILE *arq)
 
             // se for ack, quebra o laço interno e vai pro laço externo pegar mais dados
             //  case ACK:
-            ack = 1;
+            // ack = 1;
             // break;
             // }
         }
         memset(buffer_arq, 0, TAM_MAX_DADOS);
-        bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, arq);
+        bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
     }
 
     // manda uma mensagem do tipo FIM
@@ -237,6 +255,8 @@ void state_send_file(int soquete, FILE *arq)
     // case ACK:
     // printf("put_dados_cliente: recebeu um ack do server, retornando...\n");
     // printf("Contador -> %d\n", contador);
+    fclose(meuArq);
+    client->estado = INICIO;
     return;
     // }
     // }
