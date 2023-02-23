@@ -202,32 +202,32 @@ void state_create_message(int soquete, tCliente *client)
                 printf("Mensagem INICIO NAO Enviada!\n");
             }
 
-            while (hasNextMessage){
-                ack = 0;
+            while (1){
+                // ack = 0;
 
-                while (!ack){
-                    switch (recebeRetorno(soquete, &mensagem, &contador, sequencia_global))
-                    {
-                        case ACK:
-                            ack = 1;
-                            break;
-                    }
-                }
-                bit myBinaryMsg[BUFFER_GIGANTE];
-                getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+                // while (!ack){
+                //     switch (recebeRetorno(soquete, &mensagem, &contador, sequencia_global))
+                //     {
+                //         case ACK:
+                //             ack = 1;
+                //             break;
+                //     }
+                // }
+                // bit myBinaryMsg[BUFFER_GIGANTE];
+                // getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
                 
-                initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+                // initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
 
-                if (sendMessage(soquete, &mensagemInicio)){
-                    printf("Mensagem Enviada!\n");
-                }
-                else
-                {
-                    printf("Mensagem não enviada!\n");
-                }
+                // if (sendMessage(soquete, &mensagemInicio)){
+                //     printf("Mensagem Enviada!\n");
+                // }
+                // else
+                // {
+                //     printf("Mensagem não enviada!\n");
+                // }
 
-                incrementaSequencia();
-                hasNextMessage--;
+                // incrementaSequencia();
+                // hasNextMessage--;
             }
 
 
@@ -361,7 +361,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
     while (1)
     {
         // Recebe uma mensagem
-        int retorno_func = recebe_mensagem(soquete, mensagem, 1);
+        int retorno_func = recebe_mensagem(soquete, mensagem, 1, sequencia_global);
 
         if (retorno_func == 0)
             perror("Erro ao receber mensagem no recebe_retorno");

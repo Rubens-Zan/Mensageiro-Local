@@ -59,7 +59,7 @@ typedef enum
 typedef enum
 {
     TEXTO = 0x01, // texto: 0x01, 000001
-    MIDIA = 0x10, // mídia: 0x10, 100000
+    MIDIA = 0x10, // mídia: 0x10, 10000
     ACK = 0x0A,   // ack: 0x0A, 001010
     NACK = 0x00,  // nack: 0x00, 000000
     ERRO = 0x1E,  // erro: 0x1E, 011110
@@ -148,9 +148,10 @@ void deleteList(tListNode **head_ref);
 
 int sendMessage(int soquete, msgT *mensagem);
 int ConexaoRawSocket(char *device);
+void incrementaSequencia();
 
 /**********************END_UTILS*****************************************************************************************************/
 
-int recebe_mensagem(int soquete, msgT *mensagem, int timeout);
+int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual);
 
 #endif

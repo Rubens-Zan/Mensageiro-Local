@@ -11,21 +11,28 @@ int main()
     printf ("soquete -> %d\n", soquete);
 
     msgT mensagem;
-    initMessage(&mensagem, "0", 1,END, 0);
-    
+    mensagem.sequencia = -1;
+
     printf("Server Initialized...\n");
+
+    tServer *server = (tServer *)malloc(sizeof(tServer));
+    server->sequencia_atual=1;
+    server->estado = INICIO_RECEBIMENTO;
 
     while (1)
     {
 
         // atraves da primeira mensagem vai para o proximo estado
-        switch (recebeMensagemServerLoop(soquete, &mensagem)) 
+        switch (server->estado) 
         {
-            case TEXTO:
+            case INICIO_RECEBIMENTO:
+                recebeMensagemServerLoop(soquete, &mensagem, server); 
+                break;
+            case RECEBE_ARQUIVO:
                 recebeMensagemArquivo(soquete, &mensagem);
                 break;
 
-            case MIDIA:
+            case RECEBE_TEXTO:
                 recebeMensagemArquivo(soquete, &mensagem);
                 break;
             // case NACK:

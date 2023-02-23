@@ -19,15 +19,15 @@ int binaryToDecimal(char* binary) {
  * @brief Função para receber a primeira mensagem no servidor em loop 
  * @param soquete 
  * @param mensagem - Mensagem que vai receber
- * @return int - Retorna o conteúdo da mensagem de inicio pode ser ou mensagem ou texto, através deste o servidor vai para a função que trata o recebimento dos tipos de mensagem(arquivo e texto)
- */
-int recebeMensagemServerLoop(int soquete, msgT *mensagem)
+ * @return int 
+*/
+int recebeMensagemServerLoop(int soquete, msgT *mensagem, tServer *server)
 {   
-
+    printf("a"); 
     while (1)
     {
-        int retorno_func = recebe_mensagem(soquete, mensagem, 0);
-
+        int retorno_func = recebe_mensagem(soquete, mensagem, 0, server->sequencia_atual);
+        
         if (retorno_func == TIMEOUT_RETURN)
         {
             printf("Timeout ao receber mensagem\n");
@@ -38,11 +38,28 @@ int recebeMensagemServerLoop(int soquete, msgT *mensagem)
             printf("Erro ao receber mensagem\n");
             continue;
         } 
-        
-        // ok recebi a mensagem de inicio da transmissao, pode mandar bala
-        mandaRetorno(ACK, soquete, mensagem->sequencia); 
 
-        return binaryToDecimal(viterbiAlgorithm(mensagem->dados,2, mensagem->tam_msg));
+        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagem->dados, 2, mensagem->tam_msg));
+        if (mensagem->marc_inicio == MARC_INICIO && mensagem->paridade == calculaParidade(mensagem->dados,mensagem->tam_msg)){
+            if (valor == TEXTO ){
+                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor); 
+                server->estado = RECEBE_TEXTO;
+
+            }else if (valor == MIDIA){
+                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor); 
+                server->estado = RECEBE_ARQUIVO;
+            }
+
+            break;
+        }else{
+            printf("NACK ERRO NA MENSAGEM"); 
+        }
+        // ok recebi a mensagem de inicio da transmissao, pode mandar bala
+        // mandaRetorno(ACK, soquete, mensagem->sequencia); 
+        // incrementarSequencia
+
+        // printf("recebi: %d %s", binaryToDecimal(viterbiAlgorithm(mensagem->dados,2, mensagem->tam_msg)),viterbiAlgorithm(mensagem->dados,2, mensagem->tam_msg));
+
     }
 }
 
@@ -53,8 +70,9 @@ int recebeMensagemServerLoop(int soquete, msgT *mensagem)
  * @param mensagem 
  */
 void recebeMensagemTexto(int soquete, msgT *mensagem){
+    printf("Estou aguardando recebimento do texto");
     while (1){
-        int retorno_func = recebe_mensagem(soquete, mensagem, 1);
+        int retorno_func = recebe_mensagem(soquete, mensagem, 1, sequencia_global);
 
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -72,7 +90,6 @@ void recebeMensagemTexto(int soquete, msgT *mensagem){
         
         // se tudo ok
         mandaRetorno(ACK, soquete, mensagem->sequencia);
-        
 
     }
 }
@@ -89,9 +106,10 @@ void recebeMensagemArquivo(int soquete, msgT *mensagem){
     int janela_inicio = 1;
     int window_size = 10;
     int janela_fim = janela_inicio + window_size - 1;
+    printf("Estou aguardando recebimento do arquivo");
 
     while (1){
-        int retorno_func = recebe_mensagem(soquete, mensagem, 1);
+        int retorno_func = recebe_mensagem(soquete, mensagem, 1, sequencia_global);
 
         if (retorno_func == TIMEOUT_RETURN)
         {

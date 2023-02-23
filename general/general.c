@@ -252,6 +252,8 @@ void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesM
     mensagem->tipo = msgType;
     mensagem->tam_msg = strlen(mensagem->dados); // duplica por causa da modulção da trelica
     mensagem->sequencia = sequencia;
+
+    printf("ok"); 
 }
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
@@ -573,7 +575,13 @@ int ConexaoRawSocket(char *device)
 }
 
 /**********************END_UTILS*****************************************************************************************************/
-
+void incrementaSequencia()
+{
+    if (sequencia_global < 15)
+        sequencia_global++;
+    else
+        sequencia_global = 1;
+}
 /**
  * @brief Função para receber a mensagem
  * 
@@ -582,10 +590,9 @@ int ConexaoRawSocket(char *device)
  * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
  * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
  */
-int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
+int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
-    msgT mensagemAux; 
-    initMessage(&mensagemAux, "0", 1,INIT, 0);
+
 
     while (1)
     {
@@ -596,8 +603,6 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
         fds.events = POLLIN;
 
         int retorno_poll = poll(&fds, 1, TIMEOUT);
-        if(retorno_poll)
-            printf("\nretorno_poll = %d\n", retorno_poll);
 
         if (timeout)
         {
@@ -607,26 +612,18 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
                 return 0;
         }
 
-
-        if (recv(soquete, &mensagemAux, sizeof(msgT), 0) < 0)
+        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
         {
             return 0;
         }
-        else if (mensagemAux.sequencia == sequencia_global){
-            printf("sao igausi %d %d\n", mensagemAux.sequencia,sequencia_global);
-            // viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg);
-            // if retorno_pull > 0 entao recebeu alguma mensagem, senao continua
-            // printf("seq: %d %s\n",mensagemAux.sequencia, mensagemAux.dados);
-            printf("viterbi %s \n",viterbiAlgorithm(mensagemAux.dados,2,mensagemAux.tam_msg)); 
-            return 1; // adicionar?
+        else if (mensagem->sequencia == sequencia_atual){
+            printf("RECEBI A MENSAGEM SEQUENCIA %d\n",mensagem->sequencia);
+            break;
+            
         }
     }
+
+    return 1; // OK RECEBIDO?
+
 }
 
-void incrementaSequencia()
-{
-    if (sequencia_global < 15)
-        sequencia_global++;
-    else
-        sequencia_global = 1;
-}
