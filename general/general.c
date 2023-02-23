@@ -19,7 +19,6 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
     return 0;
 }
 
-
 /**********************ERROR*****************************************************************************************/
 
 void getNextState(typesState curState, unsigned int receivedBit, tNode *nextNode)
@@ -575,10 +574,18 @@ int ConexaoRawSocket(char *device)
 
 /**********************END_UTILS*****************************************************************************************************/
 
+/**
+ * @brief Função para receber a mensagem
+ * 
+ * @param soquete 
+ * @param mensagem - mensagem que vai receber a mensagem
+ * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
+ * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
+ */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout)
 {
     msgT mensagemAux; 
-    initMessage(&mensagemAux, "0", 1,INIT, 666);
+    initMessage(&mensagemAux, "0", 1,INIT, 0);
 
     while (1)
     {

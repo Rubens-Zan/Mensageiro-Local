@@ -16,31 +16,21 @@ int main()
     while (1)
     {
 
-        switch (recebeMensagemServerLoop(soquete, &mensagem))
+        // atraves da primeira mensagem vai para o proximo estado
+        switch (recebeMensagemServerLoop(soquete, &mensagem)) 
         {
-            // case PUT:
-            //     trata_put_servidor(soquete, &mensagem);
-            //     break;
+            case ENVIA_TEXTO:
+                recebeMensagemArquivo(soquete, &mensagem);
+                break;
 
-            // case GET:
-            //     trata_get_servidor(soquete, &mensagem);
-            //     break;
-            // case MKDIR:
-            //     trata_mkdir_servidor(soquete, &mensagem);
-            //     break;
-
-            // case LS:
-            //     trata_ls_servidor(soquete, &mensagem);
-            //     break;
-            // case CD:
-            //     trata_cd_servidor(soquete, &mensagem);
-            //     break;
+            case ENVIA_ARQUIVO:
+                recebeMensagemArquivo(soquete, &mensagem);
+                break;
             // case NACK:
             //     //envia_nack()
 
             break;
         }
-        printf("vms la ");
 
         // imprime_mensagem(&mensagem);
     }
