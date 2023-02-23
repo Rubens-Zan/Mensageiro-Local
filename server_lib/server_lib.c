@@ -1,4 +1,5 @@
 #include "./server_lib.h"
+#include "math.h"
 
 int binaryToDecimal(char* binary) {
     int decimal = 0;
@@ -133,7 +134,7 @@ void recebeMensagemArquivo(int soquete, msgT *mensagem){
         {
             printf("Recebido pacote de fim\n");
             mandaRetorno(ACK, soquete, mensagem->sequencia);
-            return END;
+            // return END;
         }
 
     }
