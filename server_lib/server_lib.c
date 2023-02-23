@@ -18,10 +18,11 @@ int binaryToDecimal(char* binary) {
  * @brief Função para receber a primeira mensagem no servidor em loop 
  * @param soquete 
  * @param mensagem - Mensagem que vai receber
- * @return int - Retorna o tipo da mensagem, através deste o servidor vai para a função que trata o recebimento dos tipos de mensagem(arquivo e texto)
+ * @return int - Retorna o conteúdo da mensagem de inicio pode ser ou mensagem ou texto, através deste o servidor vai para a função que trata o recebimento dos tipos de mensagem(arquivo e texto)
  */
 int recebeMensagemServerLoop(int soquete, msgT *mensagem)
-{
+{   
+
     while (1)
     {
         int retorno_func = recebe_mensagem(soquete, mensagem, 0);
@@ -37,8 +38,10 @@ int recebeMensagemServerLoop(int soquete, msgT *mensagem)
             continue;
         } 
         
-        
-        return mensagem->tipo;
+        // ok recebi a mensagem de inicio da transmissao, pode mandar bala
+        mandaRetorno(ACK, soquete, mensagem->sequencia); 
+
+        return binaryToDecimal(viterbiAlgorithm(mensagem->dados,2, mensagem->tam_msg));
     }
 }
 
@@ -66,11 +69,15 @@ void recebeMensagemTexto(int soquete, msgT *mensagem){
         
         // efetua verificações e envia nack/ack
         
+        // se tudo ok
+        mandaRetorno(ACK, soquete, mensagem->sequencia);
+        
 
     }
 }
 
 /**
+ * 
  * @brief - Função para recebimento de mensagens de arquivo 
  * 
  * @param soquete 

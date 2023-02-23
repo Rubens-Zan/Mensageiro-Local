@@ -11,6 +11,8 @@ int main()
     printf ("soquete -> %d\n", soquete);
 
     msgT mensagem;
+    initMessage(&mensagem, "0", 1,END, 0);
+    
     printf("Server Initialized...\n");
 
     while (1)
@@ -19,11 +21,11 @@ int main()
         // atraves da primeira mensagem vai para o proximo estado
         switch (recebeMensagemServerLoop(soquete, &mensagem)) 
         {
-            case ENVIA_TEXTO:
+            case TEXTO:
                 recebeMensagemArquivo(soquete, &mensagem);
                 break;
 
-            case ENVIA_ARQUIVO:
+            case MIDIA:
                 recebeMensagemArquivo(soquete, &mensagem);
                 break;
             // case NACK:

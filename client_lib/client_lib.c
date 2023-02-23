@@ -170,6 +170,8 @@ void state_create_message(int soquete, tCliente *client)
 
             // FAZER UM WHILE(1) AQUI PARA FAZER O PARA E ESPERA
             msgT mensagem;
+            msgT mensagemInicio;
+
             int inicio_mensagem = 0;
             // VERIFICAR RETORNO DE ACK/NACK
             unsigned int totalBitsMsg = currentBufferPosition * 8; // como sao UTF-8 vao utilizar 8 bits para cada wide char
@@ -187,12 +189,27 @@ void state_create_message(int soquete, tCliente *client)
             // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
             bit myBinaryMsg[BUFFER_GIGANTE];
             getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+            initMessage(&mensagemInicio, TEXTO,6, INICIO, sequencia_global);
+
+            if (sendMessage(soquete, &mensagem))
+                printf("Mensagem Enviada!\n");
+            else {
+                printf("Mensagem INICIO NAO Enviada!\n");
+            }
+
+
+            // MANDA AS MENSAGENS
             initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
             incrementaSequencia();
             // printf("myBinaryMsg %s %d\n", mensagem.dados,mensagem.sequencia);
             // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
-            if (sendMessage(soquete, &mensagem))
+
+            // RECEBO RETORNO DE INICIO DA TRANSMISSAO
+            // while (!recebeRetorno()){
+
+            // }
+            if (sendMessage(soquete, &mensagemInicio))
                 printf("Mensagem Enviada!\n");
             else
             {
