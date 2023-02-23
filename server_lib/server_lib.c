@@ -1,5 +1,5 @@
 #include "./server_lib.h"
-#include "math.h"
+#include <math.h>
 
 int binaryToDecimal(char* binary) {
     int decimal = 0;

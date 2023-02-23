@@ -3,7 +3,7 @@
 # Para remover os arquivos temporários digite make clean
 # Para remover os arquivos temporários e o arquivo executável digite make purge
 
-CFLAGS = #-Wall
+CFLAGS = #-Wall -lm
 #-lncurses
 
 OBJ_SERVER =  server.o server_lib.o general.o
@@ -22,13 +22,13 @@ client: $(OBJ_CLIENT)
 	gcc -o client $(CFLAGS) $(OBJ_CLIENT)
 
 server: $(OBJ_SERVER)
-	gcc -o server $(CFLAGS) $(OBJ_SERVER)
+	gcc -o server $(CFLAGS) $(OBJ_SERVER) -lm
 
 general.o: ./general/general.c
 	gcc $(CFLAGS) -c ./general/general.c
 
 server_lib.o: ./server_lib/server_lib.c
-	gcc $(CFLAGS) -c ./server_lib/server_lib.c
+	gcc $(CFLAGS) -c ./server_lib/server_lib.c -lm
 
 server.o: server.c
 	gcc $(CFLAGS) -c server.c

@@ -191,10 +191,13 @@ void state_create_message(int soquete, tCliente *client)
             // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
             // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
             // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
-           
+            
+            // 000001 = TEXTO
+            initMessage(&mensagemInicio,  "000001",6, INICIO, sequencia_global);
 
-            if (sendMessage(soquete, &mensagem))
-                printf("Mensagem Enviada!\n");
+
+            if (sendMessage(soquete, &mensagemInicio))
+                printf("Mensagem inicio Enviada!\n");
             else {
                 printf("Mensagem INICIO NAO Enviada!\n");
             }
@@ -203,7 +206,7 @@ void state_create_message(int soquete, tCliente *client)
                 ack = 0;
 
                 while (!ack){
-                    switch (recebeRetorno(soquete, mensagem, &contador, sequencia_global))
+                    switch (recebeRetorno(soquete, &mensagem, &contador, sequencia_global))
                     {
                         case ACK:
                             ack = 1;
@@ -298,9 +301,9 @@ void state_send_file(int soquete, tCliente *client)
                     break;
                 }
                 // else ignora ACKs repetidos
-            case NACK:
+            // case NACK:
                 // Tratar resposta de NACK
-            default:
+            // // default:
                 // Tratar outras respostas
             }
 
