@@ -173,6 +173,10 @@ void state_create_message(int soquete, tCliente *client)
             msgT mensagemInicio;
 
             int inicio_mensagem = 0;
+            int ack = 0;
+            int hasNextMessage = 1;
+            int contador = 1;
+
             // VERIFICAR RETORNO DE ACK/NACK
             unsigned int totalBitsMsg = currentBufferPosition * 8; // como sao UTF-8 vao utilizar 8 bits para cada wide char
             bit auxString[512];
@@ -187,9 +191,7 @@ void state_create_message(int soquete, tCliente *client)
             // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
             // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
             // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
-            bit myBinaryMsg[BUFFER_GIGANTE];
-            getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
-            initMessage(&mensagemInicio, TEXTO,6, INICIO, sequencia_global);
+           
 
             if (sendMessage(soquete, &mensagem))
                 printf("Mensagem Enviada!\n");
@@ -197,10 +199,37 @@ void state_create_message(int soquete, tCliente *client)
                 printf("Mensagem INICIO NAO Enviada!\n");
             }
 
+            while (hasNextMessage){
+                ack = 0;
+
+                while (!ack){
+                    switch (recebeRetorno(soquete, mensagem, &contador, sequencia_global))
+                    {
+                        case ACK:
+                            ack = 1;
+                            break;
+                    }
+                }
+                bit myBinaryMsg[BUFFER_GIGANTE];
+                getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+                
+                initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+
+                if (sendMessage(soquete, &mensagemInicio)){
+                    printf("Mensagem Enviada!\n");
+                }
+                else
+                {
+                    printf("Mensagem não enviada!\n");
+                }
+
+                incrementaSequencia();
+                hasNextMessage--;
+            }
+
 
             // MANDA AS MENSAGENS
-            initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
-            incrementaSequencia();
+         
             // printf("myBinaryMsg %s %d\n", mensagem.dados,mensagem.sequencia);
             // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
@@ -209,12 +238,7 @@ void state_create_message(int soquete, tCliente *client)
             // while (!recebeRetorno()){
 
             // }
-            if (sendMessage(soquete, &mensagemInicio))
-                printf("Mensagem Enviada!\n");
-            else
-            {
-                printf("Mensagem não enviada!\n");
-            }
+           
             // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
 
             client->estado = INICIO;
