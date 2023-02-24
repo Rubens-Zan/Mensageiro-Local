@@ -27,14 +27,13 @@ int main()
         {
             case INICIO_RECEBIMENTO:
                 recebeMensagemServerLoop(soquete, &mensagem, server); 
-                sequencia_global++;
                 break;
             case RECEBE_ARQUIVO:
                 recebeMensagemArquivo(soquete, &mensagem);
                 break;
 
             case RECEBE_TEXTO:
-                recebeMensagemArquivo(soquete, &mensagem);
+                recebeMensagemTexto(soquete, &mensagem);
                 break;
             // case NACK:
             //     //envia_nack()

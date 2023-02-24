@@ -83,12 +83,12 @@ void recebeMensagemTexto(int soquete, msgT *mensagem){
             printf("Erro ao receber mensagem\n");
             continue;
         } 
-        
+        printf("mensagem: %d", mensagem->sequencia);
         
         // efetua verificações e envia nack/ack
         
         // se tudo ok
-        mandaRetorno(ACK, soquete, mensagem->sequencia);
+        // mandaRetorno(ACK, soquete, mensagem->sequencia);
 
     }
 }

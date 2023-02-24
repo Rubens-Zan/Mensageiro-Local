@@ -153,6 +153,7 @@ void state_create_message(int soquete, tCliente *client)
     unsigned int char_code;
     unsigned int buffer_c[BUFFER_GIGANTE];
     unsigned int currentBufferPosition = 0;
+    unsigned int sequenciaAtual=0;
 
     while (1)
     {
@@ -174,7 +175,7 @@ void state_create_message(int soquete, tCliente *client)
 
             int inicio_mensagem = 0;
             int ack = 0;
-            int hasNextMessage = 1;
+            int hasNextMessage = 2;
             int contador = 1;
 
             // VERIFICAR RETORNO DE ACK/NACK
@@ -193,7 +194,7 @@ void state_create_message(int soquete, tCliente *client)
             // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
             
             // 000001 = TEXTO
-            initMessage(&mensagemInicio,  "000001",6, INICIO, sequencia_global);
+            initMessage(&mensagemInicio,  "000001",6, INICIO, sequenciaAtual);
 
 
             if (sendMessage(soquete, &mensagemInicio))
@@ -202,12 +203,12 @@ void state_create_message(int soquete, tCliente *client)
                 printf("MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
-            while (1){
+            while (hasNextMessage){
                 ack = 0;
                 printf("esperando mais ack pois mandei mais mensagem");
 
                 while (!ack){
-                    switch (recebeRetornoTexto(soquete, &mensagem, &contador))
+                    switch (recebeRetornoTexto(soquete, &mensagem, &contador, sequenciaAtual))
                     {
                         case ACK:
                             ack = 1;
@@ -218,21 +219,22 @@ void state_create_message(int soquete, tCliente *client)
                 
                 printf("recebi ack");
 
-                // bit myBinaryMsg[BUFFER_GIGANTE];
-                // getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+                bit myBinaryMsg[BUFFER_GIGANTE];
+                getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
                 
-                // initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequencia_global);
+                initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequenciaAtual);
 
-                // if (sendMessage(soquete, &mensagemInicio)){
-                //     printf("Mensagem Enviada!\n");
-                // }
-                // else
-                // {
-                //     printf("Mensagem não enviada!\n");
-                // }
+                if (sendMessage(soquete, &mensagem)){
+                    printf("Mensagem: %s Enviada!\n",mensagem.dados);
+                }
+                else
+                {
+                    printf("Mensagem não enviada!\n");
+                }
 
-                // incrementaSequencia();
-                // hasNextMessage--;
+                sequenciaAtual++;
+
+                hasNextMessage--;
             }
 
 
@@ -355,7 +357,7 @@ void state_end(tCliente *client)
     }
 }
 
-typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador){
+typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int seqAtual){
      msgT mensagem_aux;
 
     // mensagem_aux.tam_msg = mensagem->tam_msg;
@@ -378,7 +380,10 @@ typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador){
             continue;
         } 
 
-        return(mensagem_aux.tipo); 
+        if (mensagem_aux.sequencia == seqAtual)
+            return(mensagem_aux.tipo); 
+        else 
+            continue;
     }
 }
 /**FIM ESTADOS DO CLIENTE*/

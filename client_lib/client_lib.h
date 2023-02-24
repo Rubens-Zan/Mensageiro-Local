@@ -32,7 +32,7 @@ typedef struct tCliente
 void state_init(tCliente *client);
 void state_create_message(int soquete, tCliente *client);
 void state_send_file(int soquete, tCliente *client);
-typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador);
+typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int seqAtual);
 void state_end(tCliente *client);
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
