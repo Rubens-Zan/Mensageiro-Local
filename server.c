@@ -27,6 +27,7 @@ int main()
         {
             case INICIO_RECEBIMENTO:
                 recebeMensagemServerLoop(soquete, &mensagem, server); 
+                sequencia_global++;
                 break;
             case RECEBE_ARQUIVO:
                 recebeMensagemArquivo(soquete, &mensagem);

@@ -197,22 +197,27 @@ void state_create_message(int soquete, tCliente *client)
 
 
             if (sendMessage(soquete, &mensagemInicio))
-                printf("Mensagem inicio Enviada!\n");
+                printf("MENSAGEM DE INICIO ENVIADA!\n");
             else {
-                printf("Mensagem INICIO NAO Enviada!\n");
+                printf("MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
             while (1){
-                // ack = 0;
+                ack = 0;
+                printf("esperando mais ack pois mandei mais mensagem");
 
-                // while (!ack){
-                //     switch (recebeRetorno(soquete, &mensagem, &contador, sequencia_global))
-                //     {
-                //         case ACK:
-                //             ack = 1;
-                //             break;
-                //     }
-                // }
+                while (!ack){
+                    switch (recebeRetornoTexto(soquete, &mensagem, &contador))
+                    {
+                        case ACK:
+                            ack = 1;
+                            break;
+                    }
+                    ack = 1;
+                }
+                
+                printf("recebi ack");
+
                 // bit myBinaryMsg[BUFFER_GIGANTE];
                 // getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
                 
@@ -266,6 +271,7 @@ void state_send_file(int soquete, tCliente *client)
     printf("\nARQUIVO A SER ENVIADO:\n");
     FILE *meuArq = abre_arquivo(client->fileName, "rb");
     msgT mensagem;
+    mensagem.sequencia = -1;
     bit buffer_arq[TAM_MAX_DADOS];
 
     int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
@@ -294,7 +300,7 @@ void state_send_file(int soquete, tCliente *client)
         {
             switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
             {
-            case ACK:
+                case ACK:
                 if (mensagem.numero_ack > last_ack_num)
                 {
                     last_ack_num = mensagem.numero_ack;
@@ -349,6 +355,32 @@ void state_end(tCliente *client)
     }
 }
 
+typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador){
+     msgT mensagem_aux;
+
+    // mensagem_aux.tam_msg = mensagem->tam_msg;
+    // mensagem_aux.tipo = mensagem->tipo;
+    mensagem_aux.sequencia = -1;
+    // memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
+    while (1)
+    {
+        // Recebe uma mensagem
+        int retorno_func = recebe_mensagem(soquete, &mensagem_aux, 0, sequencia_global);
+
+        if (retorno_func == TIMEOUT_RETURN)
+        {
+            printf("Timeout ao receber mensagem\n");
+            continue;
+        }
+        else if (retorno_func == 0)
+        {
+            printf("Erro ao receber mensagem\n");
+            continue;
+        } 
+
+        return(mensagem_aux.tipo); 
+    }
+}
 /**FIM ESTADOS DO CLIENTE*/
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num)
 {
@@ -356,12 +388,13 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
 
     mensagem_aux.tam_msg = mensagem->tam_msg;
     mensagem_aux.tipo = mensagem->tipo;
+    mensagem_aux.sequencia = -1;
     memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
 
     while (1)
     {
         // Recebe uma mensagem
-        int retorno_func = recebe_mensagem(soquete, mensagem, 1, sequencia_global);
+        int retorno_func = recebe_mensagem(soquete, mensagem, 1, seq_num);
 
         if (retorno_func == 0)
             perror("Erro ao receber mensagem no recebe_retorno");
@@ -384,7 +417,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
                     memset(buffer_aux, 0, TAM_MAX_DADOS);
                     memcpy(buffer_aux, mensagem_aux.dados, mensagem_aux.tam_msg);
 
-                    initMessage(&mensagem_aux, buffer_aux, mensagem_aux.tam_msg, sequencia_global, mensagem_aux.tipo);
+                    initMessage(&mensagem_aux, buffer_aux, mensagem_aux.tam_msg, seq_num, mensagem_aux.tipo);
 
                     if (*contador >= MAX_TENTATIVAS)
                     {

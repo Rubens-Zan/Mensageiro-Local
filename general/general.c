@@ -3,18 +3,26 @@
 int mandaRetorno(int isAck, int soquete, int sequencia)
 {
     msgT mensagem;
+
     if (isAck)
     {
-        initMessage(&mensagem, NULL, 1, ACK, sequencia);
+        initMessage(&mensagem, NULL, 0, ACK, sequencia);
     }
     else
     {
-        initMessage(&mensagem, NULL, 1, ACK, sequencia);
+        initMessage(&mensagem, NULL, 0, NACK, sequencia);
     }
+
     if (!sendMessage(soquete, &mensagem))
     {
         perror("Erro ao enviar mensagem de retorno");
         return -1;
+    }else {
+        if (isAck)
+            printf("MANDEI RETORNO DE ACK");
+        else 
+            printf("MANDEI RETORNO DE NACK");
+
     }
     return 0;
 }
@@ -243,17 +251,15 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
 
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
-    printf("pre encoded message; %s\n", originalMessage);
+    if (originalMessage != NULL){
+        trellisEncode(mensagem->dados, originalMessage, size);
+        mensagem->paridade = calculaParidade(mensagem->dados, size);
+    }
 
-    trellisEncode(mensagem->dados, originalMessage, size);
-    printf("encoded message; %s \n", mensagem->dados);
-    mensagem->paridade = calculaParidade(mensagem->dados, size);
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
     mensagem->tam_msg = strlen(mensagem->dados); // duplica por causa da modulção da trelica
     mensagem->sequencia = sequencia;
-
-    printf("ok"); 
 }
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
@@ -616,8 +622,9 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
         {
             return 0;
         }
-        else if (mensagem->sequencia == sequencia_atual){
-            printf("RECEBI A MENSAGEM SEQUENCIA %d\n",mensagem->sequencia);
+        else if (mensagem->sequencia != -1){
+        // else if (mensagem->sequencia == sequencia_atual){
+            // printf("RECEBI A MENSAGEM SEQUENCIA %d\n",mensagem->sequencia);
             break;
             
         }

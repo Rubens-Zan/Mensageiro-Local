@@ -22,7 +22,7 @@
 // #define ENTER 13
 #define ENTER 10
 #define ESC 27
-#define TIMEOUT 1000 * 3
+#define TIMEOUT 1000 * 5
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
 

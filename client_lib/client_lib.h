@@ -7,7 +7,6 @@
 // #define ENTER 13
 #define ENTER 10
 #define ESC 27
-#define TIMEOUT 1000 * 3
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
 #define MAX_TENTATIVAS 2
@@ -33,7 +32,7 @@ typedef struct tCliente
 void state_init(tCliente *client);
 void state_create_message(int soquete, tCliente *client);
 void state_send_file(int soquete, tCliente *client);
-
+typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador);
 void state_end(tCliente *client);
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
