@@ -16,6 +16,7 @@ int main()
     printf("Server Initialized...\n");
 
     tServer *server = (tServer *)malloc(sizeof(tServer));
+    server->socket = soquete;
     server->sequencia_atual=1;
     server->estado = INICIO_RECEBIMENTO;
 
@@ -26,14 +27,14 @@ int main()
         switch (server->estado) 
         {
             case INICIO_RECEBIMENTO:
-                recebeMensagemServerLoop(soquete, &mensagem, server); 
+                recebeMensagemServerLoop(server); 
                 break;
             case RECEBE_ARQUIVO:
-                recebeMensagemArquivo(soquete, &mensagem);
+                recebeMensagemArquivo(server);
                 break;
 
             case RECEBE_TEXTO:
-                recebeMensagemTexto(soquete, &mensagem);
+                recebeMensagemTexto(server);
                 break;
             // case NACK:
             //     //envia_nack()

@@ -19,9 +19,9 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
         return -1;
     }else {
         if (isAck)
-            printf("MANDEI RETORNO DE ACK");
+            printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d", sequencia);
         else 
-            printf("MANDEI RETORNO DE NACK");
+            printf("MANDEI RETORNO DE NACK : %d", sequencia);
 
     }
     return 0;
@@ -603,7 +603,9 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
     while (1)
     {
         // cuida do timeout
+
         struct pollfd fds;
+
 
         fds.fd = soquete;
         fds.events = POLLIN;
@@ -622,9 +624,8 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
         {
             return 0;
         }
-        else if (mensagem->sequencia != -1){
+        else if (mensagem->sequencia == sequencia_atual){
         // else if (mensagem->sequencia == sequencia_atual){
-            // printf("RECEBI A MENSAGEM SEQUENCIA %d\n",mensagem->sequencia);
             break;
             
         }

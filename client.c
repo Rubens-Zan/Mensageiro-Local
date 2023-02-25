@@ -9,6 +9,7 @@ int main()
     int soquete = ConexaoRawSocket("lo");
     FILE *file;
     client->estado = INICIO;
+    client->socket = soquete; 
 
     while (1)
     {

@@ -1,5 +1,8 @@
 #include "./client_lib.h"
 
+#define PACKET_SIZE 2
+#define AVAILABLE_UNS_CHARS_PER_MSG TAM_MAX_DADOS/(PACKET_SIZE*8) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
+
 unsigned int getNextPressedChar()
 {
 
@@ -152,9 +155,11 @@ void state_create_message(int soquete, tCliente *client)
 {
     unsigned int char_code;
     unsigned int buffer_c[BUFFER_GIGANTE];
-    unsigned int currentBufferPosition = 0;
-    unsigned int sequenciaAtual=0;
-
+    unsigned int totalCharsInBuffer = 0;
+    
+    // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR) 
+    // USES 2 AS PACKET SIZE BECAUSE OF THE MDULATION CHOOSEN FOR THE TRELLICE CODE
+    unsigned int availableUCharPerMessage = TAM_MAX_DADOS / 16; 
     while (1)
     {
         char_code = getNextPressedChar();
@@ -167,88 +172,83 @@ void state_create_message(int soquete, tCliente *client)
         else if (char_code == ENTER)
         {
             // TODO
-            // MANDAR MENSAGEM DE INICIO
-
-            // FAZER UM WHILE(1) AQUI PARA FAZER O PARA E ESPERA
             msgT mensagem;
             msgT mensagemInicio;
+            unsigned int sequenciaAtual=1;
 
-            int inicio_mensagem = 0;
             int ack = 0;
             int hasNextMessage = 2;
             int contador = 1;
 
-            // VERIFICAR RETORNO DE ACK/NACK
-            unsigned int totalBitsMsg = currentBufferPosition * 8; // como sao UTF-8 vao utilizar 8 bits para cada wide char
-            bit auxString[512];
-            unsigned int remainingSize = currentBufferPosition;
+            // totalCharsInBuffer = Amount of unsigned chars to send 
+            unsigned int remainingSize = totalCharsInBuffer;
+
+            #ifdef DEBUG
             printf("\nMENSAGEM A SER ENVIADA: \n");
-            for (unsigned int i = 0; i < currentBufferPosition; ++i)
+            for (unsigned int i = 0; i < totalCharsInBuffer; ++i)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
-
-            // memcpy(auxString, buffer_c + inicio_mensagem, 8); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
-            // ADICIONAR VERIFICAÇÃO DO TAMANHO, SENDO O CONTEUDO DE NO MAXIMO 63 BYTES
-            // ATE O RESTANTE, SE CONSEGUIR, SENAO 64 NO MAX...
-            // SE FOR MAIOR, IR SEPARANDO AS MENSAGENS
+            #endif
             
+            printf("Vou enviar a mensagem: %ls, separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
             // 000001 = TEXTO
             initMessage(&mensagemInicio,  "000001",6, INICIO, sequenciaAtual);
 
 
-            if (sendMessage(soquete, &mensagemInicio))
-                printf("MENSAGEM DE INICIO ENVIADA!\n");
+            if (sendMessage(client->socket, &mensagemInicio))
+                printf("MENSAGEM DE INICIO ENVIADA! \n");
             else {
-                printf("MENSAGEM DE INICIO NAO ENVIADA!\n");
+                printf("MENSAGEM DE INICIO NAO ENVIADA! \n");
             }
 
-            while (hasNextMessage){
-                ack = 0;
-                printf("esperando mais ack pois mandei mais mensagem");
-
+            while (remainingSize > 0){
                 while (!ack){
-                    switch (recebeRetornoTexto(soquete, &mensagem, &contador, sequenciaAtual))
+                    switch (recebeRetornoTexto(client->socket, &mensagem, &contador, sequenciaAtual))
                     {
                         case ACK:
                             ack = 1;
                             break;
                     }
-                    ack = 1;
                 }
-                
-                printf("recebi ack");
+                ack = 0;
 
-                bit myBinaryMsg[BUFFER_GIGANTE];
-                getStringAsBinary(myBinaryMsg, buffer_c, currentBufferPosition, 8);
+                unsigned int auxString[TAM_MAX_DADOS];
+                unsigned int sentChars = (sequenciaAtual-1) * TAM_MAX_DADOS;
+                unsigned int uCharsInMessage = totalCharsInBuffer-sentChars < (AVAILABLE_UNS_CHARS_PER_MSG) ? totalCharsInBuffer-sentChars : (AVAILABLE_UNS_CHARS_PER_MSG);
+                bit mensagemEmBits[(TAM_MAX_DADOS+1) /2];
                 
-                initMessage(&mensagem, myBinaryMsg, currentBufferPosition * 8, TEXTO, sequenciaAtual);
+                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+                sequenciaAtual+=1;
+             
 
-                if (sendMessage(soquete, &mensagem)){
-                    printf("Mensagem: %s Enviada!\n",mensagem.dados);
+                remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
+
+                // bit myBinaryMsg[BUFFER_GIGANTE];
+                getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage * 8, 8);
+                mensagemEmBits[(TAM_MAX_DADOS+1) /2] = '\0';
+                // initMessage(&mensagem, myBinaryMsg, totalCharsInBuffer * 8, TEXTO, sequenciaAtual);
+                
+                msgT mensagem; 
+                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * 8, TEXTO, sequenciaAtual);
+
+                if (sendMessage(client->socket, &mensagem)){
+                    printf("Mensagem: %ls: %s, sequência: %d Enviada!\n",auxString,mensagem.dados, mensagem.sequencia);
                 }
                 else
                 {
                     printf("Mensagem não enviada!\n");
                 }
 
-                sequenciaAtual++;
-
-                hasNextMessage--;
+                ++sequenciaAtual;
             }
 
 
+            printf("Acabou o tamanho, enviarei fim"); 
+
             // MANDA AS MENSAGENS
-         
-            // printf("myBinaryMsg %s %d\n", mensagem.dados,mensagem.sequencia);
-            // MANDAR A MENSAGEM CRIADA
             // SE CONSEGUI MANDAR ATE O FINAL
 
-            // RECEBO RETORNO DE INICIO DA TRANSMISSAO
-            // while (!recebeRetorno()){
-
-            // }
-           
             // SAIO DO LAÇO E MANDO A MENSAGEM DE FIM
 
             client->estado = INICIO;
@@ -256,10 +256,10 @@ void state_create_message(int soquete, tCliente *client)
         }
         else
         {
-            buffer_c[currentBufferPosition] = char_code;
-            printf("%c", buffer_c[currentBufferPosition]);
-            ++currentBufferPosition;
-            buffer_c[currentBufferPosition] = '\0';
+            buffer_c[totalCharsInBuffer] = char_code;
+            printf("%lc", buffer_c[totalCharsInBuffer]);
+            ++totalCharsInBuffer;
+            buffer_c[totalCharsInBuffer] = '\0';
         }
     }
 }
@@ -364,10 +364,12 @@ typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int 
     // mensagem_aux.tipo = mensagem->tipo;
     mensagem_aux.sequencia = -1;
     // memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
+    printf("Aguardando por ack da sequencia : %d", seqAtual);
+    
     while (1)
     {
         // Recebe uma mensagem
-        int retorno_func = recebe_mensagem(soquete, &mensagem_aux, 0, sequencia_global);
+        int retorno_func = recebe_mensagem(soquete, &mensagem_aux, 0, seqAtual);
 
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -376,14 +378,13 @@ typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int 
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber mensagem\n");
+            printf("Erro ao receber retorno da mensagem de texto\n");
             continue;
         } 
-
-        if (mensagem_aux.sequencia == seqAtual)
-            return(mensagem_aux.tipo); 
-        else 
-            continue;
+        
+        printf("estoy aq %d\n", mensagem_aux.sequencia);
+        
+        return(mensagem_aux.tipo); 
     }
 }
 /**FIM ESTADOS DO CLIENTE*/

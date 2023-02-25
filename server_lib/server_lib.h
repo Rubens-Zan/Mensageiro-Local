@@ -21,7 +21,7 @@ typedef struct tServer
     unsigned int sequencia_atual;
 } tServer;
 
-int recebeMensagemServerLoop(int soquete, msgT *mensagem, tServer *server);
-void recebeMensagemTexto(int soquete, msgT *mensagem); 
-void recebeMensagemArquivo(int soquete, msgT *mensagem);
+void recebeMensagemServerLoop(tServer *server);
+void recebeMensagemTexto(tServer *server); 
+void recebeMensagemArquivo(tServer *server);
 #endif
