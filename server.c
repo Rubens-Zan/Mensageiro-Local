@@ -13,7 +13,7 @@ int main()
     msgT mensagem;
     mensagem.sequencia = -1;
 
-    printf("Server Initialized...\n");
+    printf("=> Server Initialized...\n");
 
     tServer *server = (tServer *)malloc(sizeof(tServer));
     server->socket = soquete;

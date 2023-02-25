@@ -25,19 +25,19 @@ void recebeMensagemServerLoop(tServer *server)
 {   
     msgT mensagem; 
     mensagem.sequencia = -1;
-    printf("Estou esperando a primeira mensagem \n"); 
+    printf("\n> Estou esperando a primeira mensagem \n"); 
     while (1)
     {
         int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, server->sequencia_atual);
         
         if (retorno_func == TIMEOUT_RETURN)
         {
-            printf("Timeout ao receber mensagem\n");
+            printf("> Timeout ao receber mensagem\n");
             continue;
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber mensagem no loop\n");
+            printf("> Erro ao receber mensagem no loop\n");
             continue;
         } 
 
@@ -47,11 +47,11 @@ void recebeMensagemServerLoop(tServer *server)
             printf("inicio: %d", mensagem.marc_inicio); 
 
             if (valor == TEXTO ){
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor); 
+                printf("\n> RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor); 
                 server->estado = RECEBE_TEXTO;
 
             }else if (valor == MIDIA){
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor); 
+                printf("\n> RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor); 
                 server->estado = RECEBE_ARQUIVO;
             }
             
@@ -61,9 +61,9 @@ void recebeMensagemServerLoop(tServer *server)
             return;
         }else{
             if (mensagem.marc_inicio != MARC_INICIO)
-                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM");
+                printf("> MARCADOR DE INICIO DE ERRO NA MENSAGEM\n");
             else{
-                printf("PARIDADE ERRADA");
+                printf("PARIDADE ERRADA\n");
 
             } 
             printf("inicio: %d", mensagem.marc_inicio); 
@@ -89,12 +89,12 @@ void recebeMensagemTexto(tServer *server){
 
         if (retorno_func == TIMEOUT_RETURN)
         {
-            printf("Timeout ao receber mensagem\n");
+            printf("> Timeout ao receber mensagem\n");
             continue;
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber mensagem\n");
+            printf("> Erro ao receber mensagem\n");
             continue;
         } 
         ++sequencia_atual;         
@@ -105,7 +105,7 @@ void recebeMensagemTexto(tServer *server){
         // if (mensagem.tam_msg == strlen(mensagem.dados))
         //     if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg) ){
                 bit *decodedMessage = viterbiAlgorithm(mensagem.dados,2,mensagem.tam_msg);
-                printf("Recebi a mensagem: %s \n", decodedMessage);
+                printf(" => Recebi a mensagem: %s \n", decodedMessage);
                 
                 mandaRetorno(1, server->socket, mensagem.sequencia);
         //         server->estado = INICIO_RECEBIMENTO;
@@ -116,7 +116,7 @@ void recebeMensagemTexto(tServer *server){
         // }
         // se tudo ok
         }else{
-                printf("Recebi a mensagem de fim de transmiusssão de texto \n");
+                printf("=> Recebi a mensagem de fim de transmiusssão de texto \n");
 
                 mandaRetorno(1, server->socket, mensagem.sequencia);
                 server->estado = INICIO_RECEBIMENTO;
@@ -149,12 +149,12 @@ void recebeMensagemArquivo(tServer *server){
 
         if (retorno_func == TIMEOUT_RETURN)
         {
-            printf("Timeout ao receber mensagem\n");
+            printf("> Timeout ao receber mensagem\n");
             continue;
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber mensagem\n");
+            printf("> Erro ao receber mensagem\n");
             continue;
         }
 
@@ -163,11 +163,11 @@ void recebeMensagemArquivo(tServer *server){
         {
             if (mensagem.sequencia < proxima_sequencia || mensagem.sequencia > janela_fim)
             {
-                printf("Mensagem fora da janela de recepção: sequencia %d\n", mensagem.sequencia);
+                printf("> Mensagem fora da janela de recepção: sequencia %d\n", mensagem.sequencia);
                 continue;
             }
 
-            printf("Recebido pacote: sequencia %d\n", mensagem.sequencia);
+            printf("=> Recebido pacote: sequencia %d\n", mensagem.sequencia);
 
             // processa mensagem...
 
@@ -186,7 +186,7 @@ void recebeMensagemArquivo(tServer *server){
         }
         else if (mensagem.tipo == END)
         {
-            printf("Recebido pacote de fim\n");
+            printf("=> Recebido pacote de fim\n");
             mandaRetorno(ACK, server->socket, mensagem.sequencia);
             // return END;
         }

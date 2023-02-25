@@ -118,12 +118,12 @@ void state_init(tCliente *client)
     while (1)
     {
 
-        printf("Digite o comando <i: INSERT MESSAGE, q: QUIT, s: SEND FILE>\n");
+        printf("\n--> Digite o comando <i: INSERT MESSAGE, q: QUIT, s: SEND FILE>\n");
         // WINDOW * myWindow = initscr();
         char_code = getNextPressedChar();
         if (char_code == 'i' || char_code == 'I')
         {
-            printf("INSERT\n");
+            printf("> INSERT:\n");
             client->estado = ENVIA_TEXTO;
             return;
         }
@@ -132,7 +132,7 @@ void state_init(tCliente *client)
             // scanf("%63[^\n]", buffer_c);
             // getchar();
             // printf("COMANDO %s\n", buffer_c);
-            printf("QUIT\n");
+            printf("> QUIT\n");
             client->estado = FIM_PROGRAMA;
             return;
         }
@@ -146,7 +146,7 @@ void state_init(tCliente *client)
         }
         else
         {
-            printf("COMANDO INVALIDO \n");
+            printf("> COMANDO INVALIDO! \n");
         }
     }
 }
@@ -185,22 +185,22 @@ void state_create_message(int soquete, tCliente *client)
             int remainingSize = totalCharsInBuffer;
 
             #ifdef DEBUG
-            printf("\nMENSAGEM A SER ENVIADA: \n");
+            printf("\n> MENSAGEM A SER ENVIADA: \n");
             for (unsigned int i = 0; i < totalCharsInBuffer; ++i)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
             #endif
             
-            printf("Vou enviar a mensagem: %ls, separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
+            printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
             // 000001 = TEXTO
             initMessage(&mensagemInicio,  "000001",6, INIT, sequenciaAtual);
 
 
             if (sendMessage(client->socket, &mensagemInicio))
-                printf("MENSAGEM DE INICIO ENVIADA!\n");
+                printf("> MENSAGEM DE INICIO ENVIADA!\n");
             else {
-                printf("MENSAGEM DE INICIO NAO ENVIADA! \n");
+                printf("> MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
             while(remainingSize > 0){
@@ -236,17 +236,17 @@ void state_create_message(int soquete, tCliente *client)
                 initMessage(&mensagem, mensagemEmBits, uCharsInMessage * 8, TEXTO, sequenciaAtual);
 
                 if (sendMessage(client->socket, &mensagem)){
-                    printf("Mensagem:'%ls ' sequência: %d Enviada!\n",auxString, mensagem.sequencia);
+                    printf("=> Mensagem:'%ls ' sequência: %d Enviada!\n",auxString, mensagem.sequencia);
                 }
                 else
                 {
-                    printf("Mensagem não enviada!\n");
+                    printf("=> Mensagem não enviada!\n");
                 }
 
                 
             } 
             
-            printf("Enviando mensagem de fim da mensagem de texto."); 
+            printf("=> Enviando mensagem de fim da mensagem de texto...\n"); 
 
             // MANDA AS MENSAGENS
             // SE CONSEGUI MANDAR ATE O FINAL
@@ -256,9 +256,9 @@ void state_create_message(int soquete, tCliente *client)
     
 
             if (sendMessage(client->socket, &mensagemFim))
-                printf("MENSAGEM DE FIM ENVIADA!\n");
+                printf("> MENSAGEM DE FIM ENVIADA!\n");
             else {
-                printf("MENSAGEM DE FIM NAO ENVIADA! \n");
+                printf("> MENSAGEM DE FIM NAO ENVIADA! \n");
             }
 
             client->estado = INICIO;
@@ -298,10 +298,10 @@ void state_send_file(int soquete, tCliente *client)
             initMessage(NULL, buffer_arq, bytes_lidos, DADOS, seq_num);
             if (!sendMessage(soquete, &mensagem))
             {
-                perror("Erro ao enviar mensagem no put_dados");
+                perror("> Erro ao enviar mensagem no put_dados\n");
                 // Tratar erro de envio
             }
-            printf("dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
+            printf("--> dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
             seq_num++;
             memset(buffer_arq, 0, TAM_MAX_DADOS);
             bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
@@ -337,7 +337,7 @@ void state_send_file(int soquete, tCliente *client)
     initMessage(&mensagem, NULL, TAM_MAX_DADOS, END, seq_num);
     if (!sendMessage(soquete, &mensagem))
     {
-        perror("Erro ao enviar mensagem no put_dados");
+        perror("> Erro ao enviar mensagem no put_dados\n");
     }
 
     // Recebe ACK para a mensagem de FIM
@@ -346,14 +346,14 @@ void state_send_file(int soquete, tCliente *client)
         switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
         {
         case ACK: // Terminou a transmissão com sucesso
-            printf("put_dados_cliente: recebeu um ack do server, retornando...\n");
-            printf("Contador -> %d\n", contador);
+            printf("=> put_dados_cliente: recebeu um ack do server, retornando...\n");
+            printf("=> Contador -> %d\n", contador);
             return;
         case NACK: // Tratar resposta de NACK
-            printf("Recebeu NACK..\n");
+            printf("=> Recebeu NACK..\n");
             return;
         default: // Tratar outras respostas
-            printf("Outras Respostas..\n");
+            printf("=> Outras Respostas..\n");
             return;
         }
     }
@@ -363,7 +363,7 @@ void state_end(tCliente *client)
 {
     while (1)
     {
-        printf("\nstate_end state\n");
+        printf("\n> state_end state\n");
     }
 }
 
@@ -374,7 +374,7 @@ typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int 
     // mensagem_aux.tipo = mensagem->tipo;
     mensagem_aux.sequencia = -1;
     // memcpy(mensagem_aux.dados, mensagem->dados, mensagem->tam_msg);
-    printf("Aguardando por ack da sequencia : %d", seqAtual);
+    printf("> Aguardando por ack da sequencia : %d\n", seqAtual);
     
     while (1)
     {
@@ -383,12 +383,12 @@ typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int 
 
         if (retorno_func == TIMEOUT_RETURN)
         {
-            printf("Timeout ao receber mensagem\n");
+            printf("> Timeout ao receber mensagem\n");
             continue;
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber retorno da mensagem de texto\n");
+            printf("> Erro ao receber retorno da mensagem de texto\n");
             continue;
         } 
         
@@ -412,7 +412,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
         int retorno_func = recebe_mensagem(soquete, mensagem, 1, seq_num);
 
         if (retorno_func == 0)
-            perror("Erro ao receber mensagem no recebe_retorno");
+            perror("> Erro ao receber mensagem no recebe_retorno\n");
 
         // Verifica se o marcador de início e a paridade são os corretos
         if ((mensagem->marc_inicio == MARC_INICIO) || (retorno_func == TIMEOUT_RETURN))
@@ -424,7 +424,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
                 if ((mensagem->tipo == NACK) || (retorno_func == TIMEOUT_RETURN))
                 {
                     if (retorno_func == TIMEOUT_RETURN)
-                        perror("Timeout");
+                        perror("> Timeout!\n");
 
                     // aqui nao damos return pro laço recomeçar e esperar mais uma resposta
                     char buffer_aux[TAM_MAX_DADOS];
@@ -450,7 +450,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_n
                     // printf("\n");
 
                     if (!sendMessage(soquete, &mensagem_aux))
-                        perror("Erro ao re-mandar mensagem no recebe_retorno_put");
+                        perror("> Erro ao re-mandar mensagem no recebe_retorno_put\n");
                 }
 
                 // Senão retorna o tipo
@@ -488,7 +488,7 @@ FILE *abre_arquivo(char *nome_arquivo, char *modo)
     // retorna null se nao foi bem sucedido
     if (!arq)
     {
-        perror("O arquivo nao pode ser aberto");
+        printf("> O arquivo %s nao pode ser aberto\n", *nome_arquivo);
         return NULL;
     }
 
