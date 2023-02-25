@@ -19,9 +19,9 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
         return -1;
     }else {
         if (isAck)
-            printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d", sequencia);
+            printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d \n", sequencia);
         else 
-            printf("MANDEI RETORNO DE NACK : %d", sequencia);
+            printf("MANDEI RETORNO DE NACK : %d \n", sequencia);
 
     }
     return 0;
@@ -234,7 +234,6 @@ void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size)
         encodedMessage[encodCounter + 1] = encodedX2(trellis);
         encodCounter += 2;
     }
-    encodedMessage[encodCounter] = '\0';
 }
 
 bit calculaParidade(bit *conteudo, unsigned int tam)
@@ -252,6 +251,7 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
     if (originalMessage != NULL){
+        memset(mensagem->dados, 0, TAM_MAX_DADOS); 
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size);
     }

@@ -25,7 +25,7 @@ void recebeMensagemServerLoop(tServer *server)
 {   
     msgT mensagem; 
     mensagem.sequencia = -1;
-
+    printf("Estou esperando a primeira mensagem \n"); 
     while (1)
     {
         int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, server->sequencia_atual);
@@ -99,15 +99,13 @@ void recebeMensagemTexto(tServer *server){
         } 
         ++sequencia_atual;         
         
-        
-        printf("mensagem recebida: %s %d %d", mensagem.dados, mensagem.marc_inicio, mensagem.paridade);
-        
+        if (mensagem.tipo != END){
 
         // efetua verificações e envia nack/ack
         // if (mensagem.tam_msg == strlen(mensagem.dados))
         //     if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg) ){
-        //         bit *decodedMessage = viterbiAlgorithm(mensagem.dados,2,mensagem.tam_msg);
-        //         printf("decoded message: %s \n", decodedMessage);
+                bit *decodedMessage = viterbiAlgorithm(mensagem.dados,2,mensagem.tam_msg);
+                printf("Recebi a mensagem: %s \n", decodedMessage);
                 
                 mandaRetorno(1, server->socket, mensagem.sequencia);
         //         server->estado = INICIO_RECEBIMENTO;
@@ -117,6 +115,15 @@ void recebeMensagemTexto(tServer *server){
         //     server->estado = INICIO_RECEBIMENTO;
         // }
         // se tudo ok
+        }else{
+                printf("Recebi a mensagem de fim de transmiusssão de texto \n");
+
+                mandaRetorno(1, server->socket, mensagem.sequencia);
+                server->estado = INICIO_RECEBIMENTO;
+                return; 
+        }
+        
+
 
     }
 }
