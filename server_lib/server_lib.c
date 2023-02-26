@@ -181,9 +181,10 @@ void recebeMensagemArquivo(tCliente *client)
     FILE *file = fopen(client->fileName, "wb");
     if (file == NULL)
     {
-        printf("Could not create file %s\n", client->fileName);
+        printf("> Could not create file %s\n", client->fileName);
         return;
     }
+    printf("=> File %s Successfully created on server.\n", client->filename)
 
     int window_size = 4;        // Size of the sliding window
     Packet window[window_size]; // Window array to hold the packets

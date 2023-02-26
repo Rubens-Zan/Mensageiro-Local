@@ -122,7 +122,7 @@ void state_init(tCliente *client)
         }
         else if (char_code == 's' || char_code == 'S')
         {
-            printf("SEND");
+            printf("> SEND:");
             getFileName(filename_c);
             client->estado = ENVIA_ARQUIVO;
             client->fileName = filename_c;
@@ -251,8 +251,7 @@ void state_create_message(int soquete, tCliente *client)
 
 void state_send_file(int soquete, tCliente *client)
 {
-    printf("\n=> FILE to be sent:\n");
-
+    printf("\n=> FILE to be sent: %s\n", client->filename);
     // File opening
     FILE *file = openFile(client->fileName, "rb");
     if (fp == NULL)
@@ -261,7 +260,20 @@ void state_send_file(int soquete, tCliente *client)
         state_send_file(int soquete, tCliente *client);
     }
 
-    int window_size = 4;        // tamanho da janela deslizante
+    // Send message of Initialization
+    msgT ini_message;
+    initMessage(&ini_message, "10000", 6, INIT, 1);
+    int send_ret = sendMessage(client->soquete, &ini_message);
+    if ( send_ret == 0)
+    {
+        printf("=> Initialization message sent successfully, proceeding with sending file.\n");
+    }
+    else
+    {
+        printf("> Initialization message failed to be send\n")
+    }
+
+    int window_size = 4;        // Size of Sliding Window
     Packet window[window_size]; // Window array to hold the packets
     int seq_num = 0;            // Initial sequence number
     int base = 0;               // the sequence number of the oldest unacknowledged packet
