@@ -17,20 +17,14 @@ void printOriginalMessage(bit *msg, unsigned int size ){
     unsigned int originalMessage[BUFFER_GIGANTE];
     int counter = 0;
 
-    printf("mensagem %s sz %d \n\n", msg, size);
-
     for (unsigned int i=0;i < size;i+=8){
         unsigned char curIntConverted[8+1];
         memcpy(curIntConverted, msg + i,8 * sizeof(unsigned char) );
-        // memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
-        printf("each: %s %d ",curIntConverted, counter);
-
         originalMessage[counter] = binaryToDecimal(curIntConverted);
-        printf("[%d %d]",counter,originalMessage[counter]);
         ++counter; 
     }
 
-    printf("ORIGINAL MESSAGE: %ls \n",originalMessage);
+    printf("< MENSAGEM RECEBIDA: %ls \n",originalMessage);
 }
 
 
@@ -47,7 +41,7 @@ void recebeMensagemServerLoop(tServer *server)
     printf("Estou esperando a primeira mensagem \n"); 
     while (1)
     {
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, server->sequencia_atual);
+        int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, 1);
         
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -75,13 +69,12 @@ void recebeMensagemServerLoop(tServer *server)
             
             mandaRetorno(1, server->socket, mensagem.sequencia);
 
-            // break;
             return;
         }else{
             if (mensagem.marc_inicio != MARC_INICIO)
-                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM");
+                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
             else{
-                printf("PARIDADE ERRADA %d %d\n", mensagem.paridade, calculaParidade(mensagem.dados,mensagem.tam_msg));
+                printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, calculaParidade(mensagem.dados,mensagem.tam_msg));
 
             } 
             // mandaRetorno(0, server->socket, mensagem.sequencia);
@@ -97,11 +90,12 @@ void recebeMensagemServerLoop(tServer *server)
  */
 void recebeMensagemTexto(tServer *server){
     msgT mensagem; 
-    mensagem.sequencia = -1;
     unsigned int sequencia_atual = 2;
 
-    printf("Estou aguardando recebimento do texto \n");
+    printf("< Estou aguardando recebimento do texto \n");
+
     while (1){
+        mensagem.sequencia = -1;
         int retorno_func = recebe_mensagem(server->socket, &mensagem, 1,sequencia_atual );
 
         if (retorno_func == TIMEOUT_RETURN)
@@ -115,20 +109,11 @@ void recebeMensagemTexto(tServer *server){
             continue;
         } 
 
-        
-        if(sequencia_atual != mensagem.sequencia){
-            continue;
-        }
-        // printf("teste RECEBIDA: %d %d  %s  %d",mensagem.tipo, mensagem.sequencia, mensagem.dados, mensagem.tam_msg); 
-
-
         if (mensagem.tipo == TEXTO){
 
          // efetua verificações e envia nack/ack
-            if ( mensagem.marc_inicio == MARC_INICIO){
-                // mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg)){
+            if ( mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg)){
                 bit *decodedMessage = viterbiAlgorithm(mensagem.dados,2,mensagem.tam_msg);
-                printf("MENSAGEM RECEBIDA decoded: seq:%d decod: %s  \n",mensagem.sequencia, decodedMessage); 
                 printOriginalMessage(decodedMessage,mensagem.tam_msg); 
                 printf("\n");
                 
@@ -136,19 +121,16 @@ void recebeMensagemTexto(tServer *server){
                 ++sequencia_atual;         
             }
             else{
-                printf("erro na paridade... ");
+                printf("Erro na paridade esperado: %c recebido: %d",mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
                 mandaRetorno(0, server->socket, mensagem.sequencia);
             }
-        }else{
-                printf("Recebi a mensagem de fim de transmissão de texto \n");
+        }else if (mensagem.tipo == END){
+            printf("<Recebi a mensagem de fim de transmissão de texto \n");
 
-                mandaRetorno(1, server->socket, mensagem.sequencia);
-                server->estado = INICIO_RECEBIMENTO;
-                return; 
+            mandaRetorno(1, server->socket, mensagem.sequencia);
+            server->estado = INICIO_RECEBIMENTO;
+            return; 
         }
-        
-
-
     }
 }
 

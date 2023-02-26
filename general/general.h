@@ -39,12 +39,12 @@ typedef unsigned char bit;
 
 typedef struct msgT
 {
-    bit marc_inicio : 8; // Marcador de início
+    bit marc_inicio:8; // Marcador de início
     bit tam_msg : 6;     // Tamanho da mensagem
     bit sequencia : 4;   // Número da mensagem (até 16)
     bit tipo : 6;        // Tipo da mensagem
     bit dados[TAM_MAX_DADOS];       // Buffer dos dados [64bytes]
-    bit paridade : 8;    // Paridade
+    bit paridade;    // Paridade
     int numero_ack;      //número do ACK
 } msgT;
 
@@ -153,5 +153,6 @@ void incrementaSequencia();
 /**********************END_UTILS*****************************************************************************************************/
 
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual);
+FILE *abre_arquivo(char *nome_arquivo, char *modo); 
 
 #endif

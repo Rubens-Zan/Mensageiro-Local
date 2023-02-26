@@ -253,12 +253,12 @@ void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesM
     if (originalMessage != NULL){
         memset(mensagem->dados, 0, TAM_MAX_DADOS); 
         trellisEncode(mensagem->dados, originalMessage, size);
-        mensagem->paridade = calculaParidade(mensagem->dados, size);
+        mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
     }
 
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
-    mensagem->tam_msg = strlen(mensagem->dados); // duplica por causa da modulção da trelica
+    mensagem->tam_msg = size * 2; // duplica por causa da modulção da trelica
     mensagem->sequencia = sequencia;
 }
 
@@ -598,8 +598,6 @@ void incrementaSequencia()
  */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
-
-
     while (1)
     {
         // cuida do timeout
@@ -635,3 +633,26 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
 
 }
 
+FILE *abre_arquivo(char *nome_arquivo, char *modo)
+{
+
+    char arquivo[BUFFER_GIGANTE]; // buffer imenso
+
+    strcpy(arquivo, "./");
+    strcat(arquivo, nome_arquivo);
+
+    // abre o arquivo dado com o modo dado
+    // printf("ARQ %s MODO %s \n", arquivo, modo);
+
+    FILE *arq = fopen(arquivo, modo);
+
+    // retorna null se nao foi bem sucedido
+    if (!arq)
+    {
+        printf("> O arquivo %s nao pode ser aberto\n", nome_arquivo);
+        return NULL;
+    }
+
+    // retorna o arquivo
+    return arq;
+}

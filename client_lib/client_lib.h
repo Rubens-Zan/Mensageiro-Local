@@ -9,7 +9,7 @@
 #define ESC 27
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
-#define MAX_TENTATIVAS 2
+#define MAX_TENTATIVAS 5
 
 typedef enum tState
 {
@@ -32,9 +32,8 @@ typedef struct tCliente
 void state_init(tCliente *client);
 void state_create_message(int soquete, tCliente *client);
 void state_send_file(int soquete, tCliente *client);
-typesMessage recebeRetornoTexto(int soquete, msgT *mensagem, int *contador, int seqAtual);
 void state_end(tCliente *client);
-typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seq_num);
+typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAtual);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
 void incrementaSequencia();
 FILE *abre_arquivo(char *nome_arquivo, char *modo);
