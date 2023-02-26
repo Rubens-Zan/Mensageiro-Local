@@ -16,6 +16,7 @@ int binaryToDecimal(unsigned char* binary) {
 void printOriginalMessage(bit *msg, unsigned int size ){
     unsigned int originalMessage[BUFFER_GIGANTE];
     int counter = 0;
+    printf("decoded : %s ",msg);
 
     for (unsigned int i=0;i < size;i+=8){
         unsigned char curIntConverted[8+1];
@@ -36,12 +37,13 @@ void printOriginalMessage(bit *msg, unsigned int size ){
 */
 void recebeMensagemServerLoop(tServer *server)
 {   
-    msgT mensagem; 
-    mensagem.sequencia = -1;
+    msgT mensagemInit; 
+    mensagemInit.sequencia = -1;
+
     printf("Estou esperando a primeira mensagem \n"); 
     while (1)
     {
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, 1);
+        int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 0, 1);
         
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -53,10 +55,12 @@ void recebeMensagemServerLoop(tServer *server)
             printf("Erro ao receber mensagem no loop\n");
             continue;
         } 
+        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagemInit.dados, 2, mensagemInit.tam_msg));
 
-        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagem.dados, 2, mensagem.tam_msg));
-            
-        if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados,mensagem.tam_msg)){
+        if (mensagemInit.marc_inicio == MARC_INICIO 
+        // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) || 
+        // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) - 256 )
+        ){
 
             if (valor == TEXTO ){
                 printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor); 
@@ -66,18 +70,22 @@ void recebeMensagemServerLoop(tServer *server)
                 printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor); 
                 server->estado = RECEBE_ARQUIVO;
             }
+            server->estado = RECEBE_TEXTO;
             
-            mandaRetorno(1, server->socket, mensagem.sequencia);
+            // printf("VALOR AQUI: %d ", valor); 
+            mandaRetorno(1, server->socket, 1);
 
             return;
         }else{
-            if (mensagem.marc_inicio != MARC_INICIO)
-                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
+            if (mensagemInit.marc_inicio != MARC_INICIO)
+                printf("m.e ");
+                // printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
             else{
-                printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, calculaParidade(mensagem.dados,mensagem.tam_msg));
+                printf("p.e ");
+                // printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg));
 
             } 
-            // mandaRetorno(0, server->socket, mensagem.sequencia);
+            mandaRetorno(0, server->socket, 1);
         }
     }
 }
@@ -89,14 +97,14 @@ void recebeMensagemServerLoop(tServer *server)
  * @param mensagem 
  */
 void recebeMensagemTexto(tServer *server){
-    msgT mensagem; 
+    msgT mensagemTxt; 
     unsigned int sequencia_atual = 2;
 
     printf("< Estou aguardando recebimento do texto \n");
 
     while (1){
-        mensagem.sequencia = -1;
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 1,sequencia_atual );
+        mensagemTxt.sequencia = -1;
+        int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1,sequencia_atual );
 
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -109,27 +117,33 @@ void recebeMensagemTexto(tServer *server){
             continue;
         } 
 
-        if (mensagem.tipo == TEXTO){
+        if (mensagemTxt.tipo == TEXTO){
 
          // efetua verificações e envia nack/ack
-            if ( mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg)){
-                bit *decodedMessage = viterbiAlgorithm(mensagem.dados,2,mensagem.tam_msg);
-                printOriginalMessage(decodedMessage,mensagem.tam_msg); 
+            if ( mensagemTxt.marc_inicio == MARC_INICIO 
+            // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) || 
+            // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) - 256 )
+            ){
+                bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados,2,mensagemTxt.tam_msg);
+                printf("RECEBI tm : %d paridade: %d \n",mensagemTxt.tam_msg * 8 ,mensagemTxt.paridade );
+                printOriginalMessage(decodedMessage,mensagemTxt.tam_msg * 8); 
                 printf("\n");
                 
-                mandaRetorno(1, server->socket, mensagem.sequencia);
+                mandaRetorno(1, server->socket, mensagemTxt.sequencia);
                 ++sequencia_atual;         
             }
             else{
-                printf("Erro na paridade esperado: %c recebido: %d",mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
-                mandaRetorno(0, server->socket, mensagem.sequencia);
+                printf("Erro na paridade esperado: %c recebido: %d",mensagemTxt.paridade, (unsigned int)calculaParidade(mensagemTxt.dados, mensagemTxt.tam_msg));
+                mandaRetorno(0, server->socket, mensagemTxt.sequencia);
             }
-        }else if (mensagem.tipo == END){
+        }else if (mensagemTxt.tipo == END){
             printf("<Recebi a mensagem de fim de transmissão de texto \n");
 
-            mandaRetorno(1, server->socket, mensagem.sequencia);
+            mandaRetorno(1, server->socket, mensagemTxt.sequencia);
             server->estado = INICIO_RECEBIMENTO;
             return; 
+        }else{
+            printf("tipoerrado %d ",mensagemTxt.tipo );
         }
     }
 }

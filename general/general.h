@@ -39,12 +39,13 @@ typedef unsigned char bit;
 
 typedef struct msgT
 {
-    bit marc_inicio:8; // Marcador de início
-    bit tam_msg : 6;     // Tamanho da mensagem
-    bit sequencia : 4;   // Número da mensagem (até 16)
-    bit tipo : 6;        // Tipo da mensagem
-    bit dados[TAM_MAX_DADOS];       // Buffer dos dados [64bytes]
-    bit paridade;    // Paridade
+    unsigned int marc_inicio:8; // Marcador de início
+    unsigned int tam_msg : 11;     // Tamanho da mensagem 
+    unsigned int sequencia : 4;   // Número da mensagem (até 16)
+    unsigned int tipo : 6;        // Tipo da mensagem
+    unsigned char dados[TAM_MAX_DADOS];       // Buffer dos dados [64bytes]
+    // bit paridade:6;    // Paridade
+    unsigned int paridade:6;    // Paridade
     int numero_ack;      //número do ACK
 } msgT;
 
