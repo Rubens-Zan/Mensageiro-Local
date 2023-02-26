@@ -18,16 +18,17 @@
 #include <termios.h>
 #include <dirent.h>
 #include <poll.h>
+#include <errno.h>
 
 // #define ENTER 13
 #define ENTER 10
 #define ESC 27
-#define TIMEOUT 1000 * 5
+#define TIMEOUT 1000 * 7
 #define TIMEOUT_RETURN 2
 #define BUFFER_GIGANTE 65536
 
 #define TAM_BUF 100
-#define TAM_MAX_DADOS 512 // 64 bytes = 512 bits
+#define TAM_MAX_DADOS 1024 // 128 bytes = 1024 bits
 #define MARC_INICIO 0x7e
 #define BITTOINT(bitRepresentation) (bitRepresentation - '0')
 #define INTTOBIT(intBit) (intBit + '0')

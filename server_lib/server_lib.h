@@ -3,6 +3,7 @@
 
 #include "../general/general.h"
 #include "../client_lib/client_lib.h"
+#include <math.h>
 
 typedef enum tServerState
 {

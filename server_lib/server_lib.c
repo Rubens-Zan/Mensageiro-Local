@@ -1,11 +1,14 @@
 #include "./server_lib.h"
-#include <math.h>
 
-int binaryToDecimal(unsigned char* binary) {
+
+int binaryToDecimal(unsigned char *binary)
+{
     int decimal = 0, i = 0;
     size_t len = strlen(binary);
-    for (int j = len - 1; j >= 0; j--) {
-        if (binary[j] == '1') {
+    for (int j = len - 1; j >= 0; j--)
+    {
+        if (binary[j] == '1')
+        {
             decimal += pow(2, i);
         }
         i++;
@@ -13,29 +16,31 @@ int binaryToDecimal(unsigned char* binary) {
     return decimal;
 }
 
-void printOriginalMessage(bit *msg, unsigned int size ){
+void printOriginalMessage(bit *msg, unsigned int size)
+{
     unsigned int originalMessage[BUFFER_GIGANTE];
     int counter = 0;
     printf("decoded : %s ",msg);
 
-    for (unsigned int i=0;i < size;i+=8){
-        unsigned char curIntConverted[8+1];
-        memcpy(curIntConverted, msg + i,8 * sizeof(unsigned char) );
+    for (unsigned int i = 0; i < size; i += 8)
+    {
+        unsigned char curIntConverted[8 + 1];
+        memcpy(curIntConverted, msg + i, 8 * sizeof(unsigned char));
         originalMessage[counter] = binaryToDecimal(curIntConverted);
-        ++counter; 
+        ++counter;
     }
 
-    printf("< MENSAGEM RECEBIDA: %ls \n",originalMessage);
+    printf("< MENSAGEM RECEBIDA: %ls \n", originalMessage);
 }
 
-
 /**
- * @brief Função para receber a primeira mensagem no servidor em loop 
- * @param soquete 
+ * @brief Função para receber a primeira mensagem no servidor em loop
+ * @param soquete
  * @param mensagem - Mensagem que vai receber
- * @return int 
-*/
+ * @return int
+ */
 void recebeMensagemServerLoop(tServer *server)
+<<<<<<< HEAD
 {   
     msgT mensagemInit; 
     mensagemInit.sequencia = -1;
@@ -45,6 +50,16 @@ void recebeMensagemServerLoop(tServer *server)
     {
         int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 0, 1);
         
+=======
+{
+    msgT mensagem;
+    mensagem.sequencia = -1;
+    printf("Estou esperando a primeira mensagem \n");
+    while (1)
+    {
+        int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, 1);
+
+>>>>>>> e85ce25 (Adjustments)
         if (retorno_func == TIMEOUT_RETURN)
         {
             printf("Timeout ao receber mensagem\n");
@@ -54,6 +69,7 @@ void recebeMensagemServerLoop(tServer *server)
         {
             printf("Erro ao receber mensagem no loop\n");
             continue;
+<<<<<<< HEAD
         } 
         unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagemInit.dados, 2, mensagemInit.tam_msg));
 
@@ -61,15 +77,26 @@ void recebeMensagemServerLoop(tServer *server)
         // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) || 
         // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) - 256 )
         ){
+=======
+        }
 
-            if (valor == TEXTO ){
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor); 
+        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagem.dados, 2, mensagem.tam_msg));
+>>>>>>> e85ce25 (Adjustments)
+
+        if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
+        {
+
+            if (valor == TEXTO)
+            {
+                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor);
                 server->estado = RECEBE_TEXTO;
-
-            }else if (valor == MIDIA){
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor); 
+            }
+            else if (valor == MIDIA)
+            {
+                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor);
                 server->estado = RECEBE_ARQUIVO;
             }
+<<<<<<< HEAD
             server->estado = RECEBE_TEXTO;
             
             // printf("VALOR AQUI: %d ", valor); 
@@ -86,25 +113,54 @@ void recebeMensagemServerLoop(tServer *server)
 
             } 
             mandaRetorno(0, server->socket, 1);
+=======
+
+            mandaRetorno(1, server->socket, mensagem.sequencia);
+
+            return;
+        }
+        else
+        {
+            if (mensagem.marc_inicio != MARC_INICIO)
+                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
+            else
+            {
+                printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
+            }
+            // mandaRetorno(0, server->socket, mensagem.sequencia);
+>>>>>>> e85ce25 (Adjustments)
         }
     }
 }
 
 /**
  * @brief - Função para efetuar o recebimento da mensagem de texto
- * 
- * @param soquete 
- * @param mensagem 
+ *
+ * @param soquete
+ * @param mensagem
  */
+<<<<<<< HEAD
 void recebeMensagemTexto(tServer *server){
     msgT mensagemTxt; 
+=======
+void recebeMensagemTexto(tServer *server)
+{
+    msgT mensagem;
+>>>>>>> e85ce25 (Adjustments)
     unsigned int sequencia_atual = 2;
 
     printf("< Estou aguardando recebimento do texto \n");
 
+<<<<<<< HEAD
     while (1){
         mensagemTxt.sequencia = -1;
         int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1,sequencia_atual );
+=======
+    while (1)
+    {
+        mensagem.sequencia = -1;
+        int retorno_func = recebe_mensagem(server->socket, &mensagem, 1, sequencia_atual);
+>>>>>>> e85ce25 (Adjustments)
 
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -115,8 +171,9 @@ void recebeMensagemTexto(tServer *server){
         {
             printf("Erro ao receber mensagem\n");
             continue;
-        } 
+        }
 
+<<<<<<< HEAD
         if (mensagemTxt.tipo == TEXTO){
 
          // efetua verificações e envia nack/ack
@@ -138,43 +195,73 @@ void recebeMensagemTexto(tServer *server){
             }
         }else if (mensagemTxt.tipo == END){
             printf("<Recebi a mensagem de fim de transmissão de texto \n");
+=======
+        if (mensagem.tipo == TEXTO)
+        {
+
+            // efetua verificações e envia nack/ack
+            if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
+            {
+                bit *decodedMessage = viterbiAlgorithm(mensagem.dados, 2, mensagem.tam_msg);
+                printOriginalMessage(decodedMessage, mensagem.tam_msg);
+                printf("\n");
+
+                mandaRetorno(1, server->socket, mensagem.sequencia);
+                ++sequencia_atual;
+            }
+            else
+            {
+                printf("Erro na paridade esperado: %c recebido: %d", mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
+                mandaRetorno(0, server->socket, mensagem.sequencia);
+            }
+        }
+        else if (mensagem.tipo == END)
+        {
+            printf("> Recebi a mensagem de fim de transmissão de texto \n");
+>>>>>>> e85ce25 (Adjustments)
 
             mandaRetorno(1, server->socket, mensagemTxt.sequencia);
             server->estado = INICIO_RECEBIMENTO;
+<<<<<<< HEAD
             return; 
         }else{
             printf("tipoerrado %d ",mensagemTxt.tipo );
+=======
+            return;
+>>>>>>> e85ce25 (Adjustments)
         }
     }
 }
 
 /**
- * 
- * @brief - Função para recebimento de mensagens de arquivo 
- * 
- * @param soquete 
- * @param mensagem 
+ *
+ * @brief - Função para recebimento de mensagens de arquivo
+ *
+ * @param soquete
+ * @param mensagem
  */
-void recebeMensagemArquivo(tServer *server){
+void recebeMensagemArquivo(tServer *server)
+{
     int proxima_sequencia = 1;
     int janela_inicio = 1;
     int window_size = 10;
     int janela_fim = janela_inicio + window_size - 1;
-    msgT mensagem; 
+    msgT mensagem;
     mensagem.sequencia = -1;
     printf("Estou aguardando recebimento do arquivo");
 
-    while (1){
+    while (1)
+    {
         int retorno_func = recebe_mensagem(server->socket, &mensagem, 1, sequencia_global);
 
         if (retorno_func == TIMEOUT_RETURN)
         {
-            printf("Timeout ao receber mensagem\n");
+            printf("--> Timeout ao receber mensagem\n");
             continue;
         }
         else if (retorno_func == 0)
         {
-            printf("Erro ao receber mensagem\n");
+            printf("--> Erro ao receber mensagem\n");
             continue;
         }
 
@@ -210,6 +297,5 @@ void recebeMensagemArquivo(tServer *server){
             mandaRetorno(ACK, server->socket, mensagem.sequencia);
             // return END;
         }
-
     }
 }

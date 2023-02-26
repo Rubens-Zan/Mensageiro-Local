@@ -13,16 +13,17 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
         initMessage(&mensagem, NULL, 0, NACK, sequencia);
     }
 
-    if (!sendMessage(soquete, &mensagem))
+    if (sendMessage(soquete, &mensagem) != 0)
     {
         perror("Erro ao enviar mensagem de retorno");
         return -1;
-    }else {
+    }
+    else
+    {
         if (isAck)
             printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d \n", sequencia);
-        else 
+        else
             printf("MANDEI RETORNO DE NACK : %d \n", sequencia);
-
     }
     return 0;
 }
@@ -250,7 +251,13 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
 
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
+<<<<<<< HEAD
     if (originalMessage != NULL){
+=======
+    if (originalMessage != NULL)
+    {
+        memset(mensagem->dados, 0, TAM_MAX_DADOS);
+>>>>>>> e85ce25 (Adjustments)
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
     }
@@ -524,15 +531,29 @@ unsigned int height(tNode *p)
 
 int sendMessage(int soquete, msgT *mensagem)
 {
-    if (send(soquete, mensagem, sizeof(msgT), 0) < 0)
+    // Convert message to network byte order
+    msgT message_nbo = *mensagem;
+    message_nbo.marc_inicio = htonl(message_nbo.marc_inicio);
+    message_nbo.tam_msg = htonl(message_nbo.tam_msg);
+    message_nbo.sequencia = htonl(message_nbo.sequencia);
+    message_nbo.tipo = htonl(message_nbo.tipo);
+    message_nbo.paridade = htonl(message_nbo.paridade);
+    message_nbo.numero_ack = htonl(message_nbo.numero_ack);
+    ssize_t ret = send(soquete, &message_nbo, sizeof(message_nbo), 0);
+    printf("-- Dentro do sendMessage, ret = %zd, size of message = %zu \n", ret, sizeof(message_nbo));
+    if (ret == -1) // Error occured
     {
-        return 0;
+        printf("Error sending message %s : %s\n", *mensagem, errno);
+        return -1;
     }
-    else
+    else if (ret < (TAM_MAX_DADOS/8)) // ret is different than the max length of the data being sent 512/8=64 bytes
     {
-        // error sending message...
-        return 1;
+        printf("Connection was closed before all the data could be transmitted\n");
+        return -1;
     }
+    // value is equal to the length of the data being sent
+    printf("Data Sent successfully\n");
+    return 0;
 }
 
 int ConexaoRawSocket(char *device)
@@ -582,54 +603,62 @@ int ConexaoRawSocket(char *device)
 /**********************END_UTILS*****************************************************************************************************/
 void incrementaSequencia()
 {
-    if (sequencia_global < 15)
-        sequencia_global++;
+    if (sequencia_global < 8)
+        ++sequencia_global;
     else
-        sequencia_global = 1;
+        sequencia_global = 0;
 }
 /**
  * @brief Função para receber a mensagem
- * 
- * @param soquete 
+ *
+ * @param soquete
  * @param mensagem - mensagem que vai receber a mensagem
  * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
- * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
+ * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento
  */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
     while (1)
     {
-        // cuida do timeout
-
         struct pollfd fds;
-
 
         fds.fd = soquete;
         fds.events = POLLIN;
 
-        int retorno_poll = poll(&fds, 1, TIMEOUT);
+        int retorno_poll = poll(&fds, 1, TIMEOUT); // cuida do timeout
 
-        if (timeout)
+        if (retorno_poll == 0) // Timeout occured
         {
-            if (retorno_poll == 0)
-                return TIMEOUT_RETURN;
-            else if (retorno_poll < 0)
+            perror("> Timeout on poll()\n");
+            return TIMEOUT_RETURN;
+        }
+        else if (retorno_poll == -1) // Error
+        {
+            printf("> Error on poll %s\n", errno);
+            return -1;
+        }
+        else // Data is Available to read
+        {
+            printf("=> poll had success, returned %d proceeding...\n", retorno_poll);
+            // Recv Treatment
+            ssize_t ret_recv = recv(soquete, mensagem, sizeof(msgT), 0);
+            if (ret_recv == -1)
+            {
+                printf("> Error on recv %s, received %d\n", errno, ret_recv);
+                return -1;
+            }
+            else if (ret_recv == 0)
+            {
+                perror("> Connection was closed by server\n");
+                return 1;
+            }
+            else
+            {
+                printf("> ret_recv received %d bytes\n", ret_recv);
                 return 0;
-        }
-
-        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
-        {
-            return 0;
-        }
-        else if (mensagem->sequencia == sequencia_atual){
-        // else if (mensagem->sequencia == sequencia_atual){
-            break;
-            
+            }
         }
     }
-
-    return 1; // OK RECEBIDO?
-
 }
 
 FILE *abre_arquivo(char *nome_arquivo, char *modo)

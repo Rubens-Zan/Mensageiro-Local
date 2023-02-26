@@ -2,8 +2,12 @@
 #include <time.h>
 
 #define PACKET_SIZE 2
+<<<<<<< HEAD
 // 32 bytes
 #define AVAILABLE_UNS_CHARS_PER_MSG (TAM_MAX_DADOS/(PACKET_SIZE*8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
+=======
+#define AVAILABLE_UNS_CHARS_PER_MSG (TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
+>>>>>>> e85ce25 (Adjustments)
 
 unsigned int getNextPressedChar()
 {
@@ -145,8 +149,8 @@ void state_create_message(int soquete, tCliente *client)
     unsigned int char_code;
     unsigned int buffer_c[BUFFER_GIGANTE];
     unsigned int totalCharsInBuffer = 0;
-    
-    // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR) 
+
+    // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR)
     // USES 2 AS PACKET SIZE BECAUSE OF THE MDULATION CHOOSEN FOR THE TRELLICE CODE
     while (1)
     {
@@ -160,22 +164,27 @@ void state_create_message(int soquete, tCliente *client)
         else if (char_code == ENTER)
         {
             msgT mensagem;
+<<<<<<< HEAD
 
             unsigned int sequenciaAtual=1;
+=======
+            unsigned int sequenciaAtual = 0;
+>>>>>>> e85ce25 (Adjustments)
 
-            // totalCharsInBuffer = Amount of unsigned chars to send 
+            // totalCharsInBuffer = Amount of unsigned chars to send
             int remainingSize = totalCharsInBuffer;
 
-            #ifdef DEBUG
+#ifdef DEBUG
             printf("\n> MENSAGEM A SER ENVIADA: \n");
             for (unsigned int i = 0; i < totalCharsInBuffer; ++i)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
-            #endif
-            
+#endif
+
             printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
             // 000001 = TEXTO
+<<<<<<< HEAD
             initMessage(&mensagem,  "000001",6, INIT, 1);
 
 
@@ -183,27 +192,39 @@ void state_create_message(int soquete, tCliente *client)
                 printf("> MENSAGEM DE INICIO ENVIADA! %d %d %s\n", mensagem.tipo, mensagem.sequencia, mensagem.dados);
 
             }else {
+=======
+            initMessage(&mensagem, "000001", 6, INIT, sequenciaAtual);
+
+            if (sendMessage(client->socket, &mensagem))
+            {
+                printf("> MENSAGEM DE INICIO ENVIADA!\n");
+            }
+            else
+            {
+>>>>>>> e85ce25 (Adjustments)
                 printf("> MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
-            while(remainingSize > 0){
+            while (remainingSize > 0)
+            {
                 int contador = 1;
                 int ack = 0;
-                while (!ack){
+                while (!ack)
+                {
                     switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
                     {
-                        case ACK:
-                            ack = 1;
-                            break;
-                        case TIMEOUT:
-                            ack = 1;
-                            client->estado = INICIO;
-                            return; 
+                    case ACK:
+                        ack = 1;
+                        break;
+                    case TIMEOUT:
+                        ack = 1;
+                        client->estado = INICIO;
+                        return;
                     }
                 }
 
-
                 unsigned int auxString[AVAILABLE_UNS_CHARS_PER_MSG + 1];
+<<<<<<< HEAD
                 memset(auxString,0, AVAILABLE_UNS_CHARS_PER_MSG + 1); 
                 unsigned int sentChars = (sequenciaAtual-1) * AVAILABLE_UNS_CHARS_PER_MSG;
                 unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
@@ -213,29 +234,39 @@ void state_create_message(int soquete, tCliente *client)
                 // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual+=1;
                 remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
+=======
+                unsigned int sentChars = (sequenciaAtual - 1) * AVAILABLE_UNS_CHARS_PER_MSG;
+                unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
+                bit mensagemEmBits[TAM_MAX_DADOS];
+
+                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); // TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+                auxString[uCharsInMessage] = '\0';
+                sequenciaAtual += 1;
+                remainingSize -= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice
+>>>>>>> e85ce25 (Adjustments)
 
                 getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, 8);
                 initMessage(&mensagem, mensagemEmBits, uCharsInMessage * 8, TEXTO, sequenciaAtual);
 
-                if (sendMessage(client->socket, &mensagem)){
+                if (sendMessage(client->socket, &mensagem))
+                {
                     time_t t;
                     time(&t);
 
-                    printf("%s Mensagem: '%ls ' sequência: %d enviada!", ctime(&t),auxString, mensagem.sequencia);
+                    printf("%s Mensagem: '%ls ' sequência: %d enviada!", ctime(&t), auxString, mensagem.sequencia);
                 }
                 else
                 {
                     printf("=> Mensagem não enviada!\n");
                 }
+            }
 
-                
-            } 
-            
             // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
-            initMessage(&mensagem,  NULL,0, END, sequenciaAtual+1);
+            initMessage(&mensagem, NULL, 0, END, sequenciaAtual + 1);
             if (sendMessage(client->socket, &mensagem))
                 printf("> MENSAGEM DE FIM ENVIADA!\n");
-            else {
+            else
+            {
                 printf("> MENSAGEM DE FIM NAO ENVIADA! \n");
             }
 
@@ -289,16 +320,16 @@ void state_send_file(int soquete, tCliente *client)
         {
             switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
             {
-                case ACK:
+            case ACK:
                 if (mensagem.numero_ack > last_ack_num)
                 {
                     last_ack_num = mensagem.numero_ack;
                     break;
                 }
                 // else ignora ACKs repetidos
-            // case NACK:
+                // case NACK:
                 // Tratar resposta de NACK
-            // // default:
+                // // default:
                 // Tratar outras respostas
             }
 
@@ -384,11 +415,16 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                 // imprime_mensagem(&mensagem_aux);
                 // printf("\n");
 
+<<<<<<< HEAD
                 if (!sendMessage(soquete, mensagem)){
                     printf("> Erro ao re-mandar mensagem no recebe_retorno\n");
                 }else{
                     printf("> Reenviei a mensagem\n");
                 }
+=======
+                if (!sendMessage(soquete, mensagem))
+                    perror("> Erro ao re-mandar mensagem no recebe_retorno\n");
+>>>>>>> e85ce25 (Adjustments)
             }
 
             // Senão retorna o tipo
@@ -411,4 +447,3 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
         }
     }
 }
-
