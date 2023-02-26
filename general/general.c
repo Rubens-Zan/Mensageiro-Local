@@ -526,29 +526,15 @@ unsigned int height(tNode *p)
 
 int sendMessage(int soquete, msgT *mensagem)
 {
-    // Convert message to network byte order
-    msgT message_nbo = *mensagem;
-    message_nbo.marc_inicio = htonl(message_nbo.marc_inicio);
-    message_nbo.tam_msg = htonl(message_nbo.tam_msg);
-    message_nbo.sequencia = htonl(message_nbo.sequencia);
-    message_nbo.tipo = htonl(message_nbo.tipo);
-    message_nbo.paridade = htonl(message_nbo.paridade);
-    message_nbo.numero_ack = htonl(message_nbo.numero_ack);
-    ssize_t ret = send(soquete, &message_nbo, sizeof(message_nbo), 0);
-    printf("-- Dentro do sendMessage, ret = %zd, size of message = %zu \n", ret, sizeof(message_nbo));
-    if (ret == -1) // Error occured
+    if (send(soquete, mensagem, sizeof(msgT), 0) < 0)
     {
-        printf("Error sending message %s : %s\n", *mensagem, errno);
-        return -1;
+        return 0;
     }
-    else if (ret < (TAM_MAX_DADOS / 8)) // ret is different than the max length of the data being sent 512/8=64 bytes
+    else
     {
-        printf("Connection was closed before all the data could be transmitted\n");
-        return -2;
+        // error sending message...
+        return 1;
     }
-    // value is equal to the length of the data being sent
-    printf("Data Sent successfully\n");
-    return 0;
 }
 
 int ConexaoRawSocket(char *device)
@@ -603,58 +589,52 @@ void incrementaSequencia()
     else
         sequencia_global = 0;
 }
+
 /**
  * @brief Função para receber a mensagem
- *
- * @param soquete
+ * 
+ * @param soquete 
  * @param mensagem - mensagem que vai receber a mensagem
  * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
- * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento
+ * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
  */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
     while (1)
     {
+        // cuida do timeout
+
         struct pollfd fds;
+
 
         fds.fd = soquete;
         fds.events = POLLIN;
 
-        int retorno_poll = poll(&fds, 1, TIMEOUT); // cuida do timeout
+        int retorno_poll = poll(&fds, 1, TIMEOUT);
 
-        if (retorno_poll == 0) // Timeout occured
+        if (timeout)
         {
-            perror("> Timeout on poll()\n");
-            return TIMEOUT_RETURN;
-        }
-        else if (retorno_poll == -1) // Error
-        {
-            printf("> Error on poll %s\n", errno);
-            return -1;
-        }
-        else // Data is Available to read
-        {
-            printf("=> poll had success, returned %d proceeding...\n", retorno_poll);
-            // Recv Treatment
-            ssize_t ret_recv = recv(soquete, mensagem, sizeof(msgT), 0);
-            if (ret_recv == -1)
-            {
-                printf("> Error on recv %s, received %d\n", errno, ret_recv);
-                return -1;
-            }
-            else if (ret_recv == 0)
-            {
-                perror("> Connection was closed by server\n");
-                return 1;
-            }
-            else
-            {
-                printf("> ret_recv received %d bytes\n", ret_recv);
+            if (retorno_poll == 0)
+                return TIMEOUT_RETURN;
+            else if (retorno_poll < 0)
                 return 0;
-            }
+        }
+
+        if (recv(soquete, mensagem, sizeof(msgT), 0) < 0)
+        {
+            return 0;
+        }
+        else if (mensagem->sequencia == sequencia_atual){
+        // else if (mensagem->sequencia == sequencia_atual){
+            break;
+            
         }
     }
+
+    return 1; // OK RECEBIDO?
+
 }
+
 
 FILE *openFIle(char *filename, char *mode)
 {
