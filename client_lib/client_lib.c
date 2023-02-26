@@ -2,12 +2,7 @@
 #include <time.h>
 
 #define PACKET_SIZE 2
-<<<<<<< HEAD
-// 32 bytes
-#define AVAILABLE_UNS_CHARS_PER_MSG (TAM_MAX_DADOS/(PACKET_SIZE*8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
-=======
 #define AVAILABLE_UNS_CHARS_PER_MSG (TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
->>>>>>> e85ce25 (Adjustments)
 
 unsigned int getNextPressedChar()
 {
@@ -78,7 +73,6 @@ bit *convertToBin(unsigned int num, unsigned int bitsSize)
     return convertedNumb;
 }
 
-
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam)
 {
     // A small 9 characters buffer we use to perform the conversion
@@ -95,10 +89,7 @@ void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigne
     messageS[curPos] = '\0';
 }
 
-/**
- * ESTADOS DO CLIENTE
- */
-
+/* ESTADOS DO CLIENTE*/
 void state_init(tCliente *client)
 {
     // i: Inicia a criação de uma mensagem. Enter para enviar.
@@ -144,6 +135,7 @@ void state_init(tCliente *client)
     }
 }
 
+// TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
 void state_create_message(int soquete, tCliente *client)
 {
     unsigned int char_code;
@@ -164,12 +156,7 @@ void state_create_message(int soquete, tCliente *client)
         else if (char_code == ENTER)
         {
             msgT mensagem;
-<<<<<<< HEAD
-
-            unsigned int sequenciaAtual=1;
-=======
             unsigned int sequenciaAtual = 0;
->>>>>>> e85ce25 (Adjustments)
 
             // totalCharsInBuffer = Amount of unsigned chars to send
             int remainingSize = totalCharsInBuffer;
@@ -184,24 +171,14 @@ void state_create_message(int soquete, tCliente *client)
 
             printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
             // 000001 = TEXTO
-<<<<<<< HEAD
-            initMessage(&mensagem,  "000001",6, INIT, 1);
-
-
-            if (sendMessage(client->socket, &mensagem)){
-                printf("> MENSAGEM DE INICIO ENVIADA! %d %d %s\n", mensagem.tipo, mensagem.sequencia, mensagem.dados);
-
-            }else {
-=======
-            initMessage(&mensagem, "000001", 6, INIT, sequenciaAtual);
+            initMessage(&mensagem, "000001", 6, INIT, 1);
 
             if (sendMessage(client->socket, &mensagem))
             {
-                printf("> MENSAGEM DE INICIO ENVIADA!\n");
+                printf("> MENSAGEM DE INICIO ENVIADA! %d %d %s\n", mensagem.tipo, mensagem.sequencia, mensagem.dados);
             }
             else
             {
->>>>>>> e85ce25 (Adjustments)
                 printf("> MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
@@ -224,26 +201,15 @@ void state_create_message(int soquete, tCliente *client)
                 }
 
                 unsigned int auxString[AVAILABLE_UNS_CHARS_PER_MSG + 1];
-<<<<<<< HEAD
-                memset(auxString,0, AVAILABLE_UNS_CHARS_PER_MSG + 1); 
-                unsigned int sentChars = (sequenciaAtual-1) * AVAILABLE_UNS_CHARS_PER_MSG;
-                unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
-                bit mensagemEmBits[TAM_MAX_DADOS];
-                
-                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
-                // auxString[uCharsInMessage] = '\0';
-                sequenciaAtual+=1;
-                remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
-=======
+                memset(auxString, 0, AVAILABLE_UNS_CHARS_PER_MSG + 1);
                 unsigned int sentChars = (sequenciaAtual - 1) * AVAILABLE_UNS_CHARS_PER_MSG;
                 unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
                 bit mensagemEmBits[TAM_MAX_DADOS];
 
                 memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); // TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
-                auxString[uCharsInMessage] = '\0';
+                // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual += 1;
                 remainingSize -= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice
->>>>>>> e85ce25 (Adjustments)
 
                 getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, 8);
                 initMessage(&mensagem, mensagemEmBits, uCharsInMessage * 8, TEXTO, sequenciaAtual);
@@ -283,69 +249,129 @@ void state_create_message(int soquete, tCliente *client)
     }
 }
 
-// TODO EFETUAR O ENVIO DA MENSAGEM PELO SOCKET
 void state_send_file(int soquete, tCliente *client)
 {
-    int window_size = 10; // tamanho da janela deslizante
-    int contador = 1;
-    printf("\nARQUIVO A SER ENVIADO:\n");
-    FILE *meuArq = abre_arquivo(client->fileName, "rb");
-    msgT mensagem;
-    mensagem.sequencia = -1;
-    bit buffer_arq[TAM_MAX_DADOS];
+    printf("\n=> FILE to be sent:\n");
 
-    int bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
-    int seq_num = 0;      // número de sequência inicial
-    int last_ack_num = 0; // último número de ACK recebido
-
-    while (bytes_lidos != 0 || seq_num <= last_ack_num)
+    // File opening
+    FILE *file = openFile(client->fileName, "rb");
+    if (fp == NULL)
     {
-        while ((seq_num < last_ack_num + window_size) && (bytes_lidos != 0))
+        printf("File not opened, try again\n");
+        state_send_file(int soquete, tCliente *client);
+    }
+
+    int window_size = 4;        // tamanho da janela deslizante
+    Packet window[window_size]; // Window array to hold the packets
+    int seq_num = 0;            // Initial sequence number
+    int base = 0;               // the sequence number of the oldest unacknowledged packet
+    int bytes_read;             // Variable to Hold number of bytes read
+
+    while (bytes_read > 0)
+    {
+        for (int i = 0; i < window_size && bytes_read > 0; ++i) // Create Packets in the window
         {
-            // Envia pacote de dados com número de sequência seq_num
-            initMessage(NULL, buffer_arq, bytes_lidos, DADOS, seq_num);
-            if (!sendMessage(soquete, &mensagem))
-            {
-                perror("> Erro ao enviar mensagem no put_dados\n");
-                // Tratar erro de envio
-            }
-            printf("--> dados.. %d, buffer_arq \n %s", bytes_lidos, buffer_arq);
-            seq_num++;
-            memset(buffer_arq, 0, TAM_MAX_DADOS);
-            bytes_lidos = fread(buffer_arq, sizeof(bit), (TAM_MAX_DADOS / 2) - 1, meuArq);
+            bytes_read = fread(window[i].data, sizeof(bit), TAM_MAX_DADOS, file;
+            Packet packet; // construct packet
+            memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
+            packet.seq_num = seq_num; // Packet sequence number receive actual sequence number
+            window[i] = packet;
+            printf("--> Number of bytes Read: %d, Packet %d:, Data: %s\n", bytes_read, i, window[i].data); // Print of variables
         }
 
-        // Recebe ACKs e NACKs
+        for (int i = 0; i < window_size; ++i) // Send packet in the window
+        {
+            int sent = send(sock, &window[i], sizeof(packet), 0);
+            if (sent == -1)
+            {
+                perror("> Error sending packet\n");
+                return 1;
+            }
+            printf("=> Package %d of window was successfully sent\n", i);
+
+            // Increase the sequence number
+            if (seq_num < 8)
+            {
+                printf("=> Increasing sequence number %d in one\n", seq_num);
+                ++seq_num;
+            }
+            else
+            {
+                printf("=> Reseting sequence number %d to 0\n", seq_num);
+                seq_num = 0;
+            }
+        }
+
+        // check for ACKs and NACKs
         while (1)
         {
-            switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
+            fd_set read_fds;
+            FD_ZERO(&read_fds);
+            FD_SET(sock, &read_fds);
+
+            struct timeval timeout;
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+
+            int select_result = select(soquete + 1, &read_fds, NULL, NULL, &timeout);
+            if (select_result == -1) // Error
             {
-            case ACK:
-                if (mensagem.numero_ack > last_ack_num)
+                perror("> Error in select\n");
+                return 1;
+            }
+            else if (select_result == 0) // timeout expired, retransmit packets
+            {
+                for (int i = base; i < seq_num; i++)
                 {
-                    last_ack_num = mensagem.numero_ack;
-                    break;
+                    int sent = send(soquete, &window[i % window_size], sizeof(Packet), 0);
+                    if (sent == -1)
+                    {
+                        perror("> Error retransmitting packet\n");
+                        return 1;
+                    }
+                    printf("=> Package %d of window was successfully sent\n", i % window_size);
                 }
-                // else ignora ACKs repetidos
-                // case NACK:
-                // Tratar resposta de NACK
-                // // default:
-                // Tratar outras respostas
+            }
+            else // acknowledgement received
+            {
+                Packet ack_packet;
+                int recv_size = recv(soquete, &ack_packet, sizeof(Packet), 0);
+                if (recv_size == -1) // Error on recv
+                {
+                    perror("> Error receiving acknowledgement\n");
+                    return 1;
+                }
+                else if (recv_size == 0) // Timeout
+                {
+                    fprintf(stderr, "> Server closed connection\n");
+                    return 1;
+                }
+                else // Success
+                {
+                    printf("=> ACK Received\n");
+                    base = ack_packet.seq_num + 1;
+                }
             }
 
-            // Sai do loop de recebimento de ACKs se todos os pacotes enviados foram confirmados
-            if (last_ack_num >= seq_num - 1)
+            if (base == seq_num) // all packets have been acknowledged
             {
                 break;
             }
         }
+
+        for (int i = 0; i < window_size; ++i)
+        {
+            memset(window[i].data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
+        }
+
+        memset(packet.data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
     }
 
     // Envia mensagem do tipo FIM
     initMessage(&mensagem, NULL, TAM_MAX_DADOS, END, seq_num);
     if (!sendMessage(soquete, &mensagem))
     {
-        perror("> Erro ao enviar mensagem no put_dados\n");
+        perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
     }
 
     // Recebe ACK para a mensagem de FIM
@@ -353,15 +379,14 @@ void state_send_file(int soquete, tCliente *client)
     {
         switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
         {
-        case ACK: // Terminou a transmissão com sucesso
-            printf("=> put_dados_cliente: recebeu um ack do server, retornando...\n");
-            printf("=> Contador -> %d\n", contador);
+        case ACK: // Success
+            printf("=> Received ACK for end of transmission\n");
             return;
-        case NACK: // Tratar resposta de NACK
-            printf("=> Recebeu NACK..\n");
+        case NACK: // Failed
+            printf("=> Recebeu NACK for end of transmission\n");
             return;
-        default: // Tratar outras respostas
-            printf("=> Outras Respostas..\n");
+        default: // Other cases
+            printf("=> Not recognized\n");
             return;
         }
     }
@@ -407,7 +432,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                 // Incrementa o contador de NACKs recebidos
                 if (mensagem->tipo == NACK)
                 {
-                    printf("RECEBI NACK"); 
+                    printf("RECEBI NACK");
                     (*contador)++;
                 }
 
@@ -415,34 +440,37 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                 // imprime_mensagem(&mensagem_aux);
                 // printf("\n");
 
-<<<<<<< HEAD
-                if (!sendMessage(soquete, mensagem)){
+                if (!sendMessage(soquete, mensagem))
+                {
                     printf("> Erro ao re-mandar mensagem no recebe_retorno\n");
-                }else{
+                }
+                else
+                {
                     printf("> Reenviei a mensagem\n");
                 }
-=======
-                if (!sendMessage(soquete, mensagem))
-                    perror("> Erro ao re-mandar mensagem no recebe_retorno\n");
->>>>>>> e85ce25 (Adjustments)
             }
 
             // Senão retorna o tipo
             else
             {
-                if ((unsigned int)mensagem_aux.tipo == ACK){
+                if ((unsigned int)mensagem_aux.tipo == ACK)
+                {
                     printf("ack %d\n", mensagem_aux.sequencia);
-                    return (unsigned int) mensagem_aux.tipo;
-                    
-                }else if((unsigned int)mensagem_aux.tipo == NACK){
-                    printf("Nack %d\n", mensagem_aux.sequencia);
-                    return (unsigned int) mensagem_aux.tipo;
-                }else{
-                    printf("nao sei oq eh isso %d",mensagem_aux.tipo);
+                    return (unsigned int)mensagem_aux.tipo;
                 }
-
+                else if ((unsigned int)mensagem_aux.tipo == NACK)
+                {
+                    printf("Nack %d\n", mensagem_aux.sequencia);
+                    return (unsigned int)mensagem_aux.tipo;
+                }
+                else
+                {
+                    printf("nao sei oq eh isso %d", mensagem_aux.tipo);
+                }
             }
-        }else{
+        }
+        else
+        {
             printf("marcador de inicio errado");
         }
     }

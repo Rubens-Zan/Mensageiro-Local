@@ -1,6 +1,5 @@
 #include "./server_lib.h"
 
-
 int binaryToDecimal(unsigned char *binary)
 {
     int decimal = 0, i = 0;
@@ -20,7 +19,7 @@ void printOriginalMessage(bit *msg, unsigned int size)
 {
     unsigned int originalMessage[BUFFER_GIGANTE];
     int counter = 0;
-    printf("decoded : %s ",msg);
+    printf("decoded : %s ", msg);
 
     for (unsigned int i = 0; i < size; i += 8)
     {
@@ -40,26 +39,15 @@ void printOriginalMessage(bit *msg, unsigned int size)
  * @return int
  */
 void recebeMensagemServerLoop(tServer *server)
-<<<<<<< HEAD
-{   
-    msgT mensagemInit; 
+{
+    msgT mensagemInit;
     mensagemInit.sequencia = -1;
 
-    printf("Estou esperando a primeira mensagem \n"); 
-    while (1)
-    {
-        int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 0, 1);
-        
-=======
-{
-    msgT mensagem;
-    mensagem.sequencia = -1;
     printf("Estou esperando a primeira mensagem \n");
     while (1)
     {
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 0, 1);
+        int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 0, 1);
 
->>>>>>> e85ce25 (Adjustments)
         if (retorno_func == TIMEOUT_RETURN)
         {
             printf("Timeout ao receber mensagem\n");
@@ -69,98 +57,67 @@ void recebeMensagemServerLoop(tServer *server)
         {
             printf("Erro ao receber mensagem no loop\n");
             continue;
-<<<<<<< HEAD
-        } 
+        }
         unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagemInit.dados, 2, mensagemInit.tam_msg));
 
-        if (mensagemInit.marc_inicio == MARC_INICIO 
-        // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) || 
-        // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) - 256 )
-        ){
-=======
-        }
-
-        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagem.dados, 2, mensagem.tam_msg));
->>>>>>> e85ce25 (Adjustments)
-
-        if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
+        if (mensagemInit.marc_inicio == MARC_INICIO
+            // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) ||
+            // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg) - 256 )
+        )
         {
 
-            if (valor == TEXTO)
+            if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
             {
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor);
+
+                if (valor == TEXTO)
+                {
+                    printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE TEXTO: %d\n", valor);
+                    server->estado = RECEBE_TEXTO;
+                }
+                else if (valor == MIDIA)
+                {
+                    printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor);
+                    server->estado = RECEBE_ARQUIVO;
+                }
                 server->estado = RECEBE_TEXTO;
+
+                // printf("VALOR AQUI: %d ", valor);
+                mandaRetorno(1, server->socket, 1);
+
+                return;
             }
-            else if (valor == MIDIA)
-            {
-                printf("RECEBI UMA MENSAGEM DE INICIO DE TRANSMISSAO DE MIDIA: %d\n", valor);
-                server->estado = RECEBE_ARQUIVO;
-            }
-<<<<<<< HEAD
-            server->estado = RECEBE_TEXTO;
-            
-            // printf("VALOR AQUI: %d ", valor); 
-            mandaRetorno(1, server->socket, 1);
-
-            return;
-        }else{
-            if (mensagemInit.marc_inicio != MARC_INICIO)
-                printf("m.e ");
-                // printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
-            else{
-                printf("p.e ");
-                // printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg));
-
-            } 
-            mandaRetorno(0, server->socket, 1);
-=======
-
-            mandaRetorno(1, server->socket, mensagem.sequencia);
-
-            return;
-        }
-        else
-        {
-            if (mensagem.marc_inicio != MARC_INICIO)
-                printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
             else
             {
-                printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
+                if (mensagemInit.marc_inicio != MARC_INICIO)
+                    printf("m.e ");
+                // printf("MARCADOR DE INICIO DE ERRO NA MENSAGEM INICIAL \n");
+                else
+                {
+                    printf("p.e ");
+                    // printf("PARIDADE ERRADA RECEBIDO: %d ESPERADO: %d\n", mensagem.paridade, (unsigned int)calculaParidade(mensagem.dados,mensagem.tam_msg));
+                }
+                mandaRetorno(0, server->socket, 1);
             }
-            // mandaRetorno(0, server->socket, mensagem.sequencia);
->>>>>>> e85ce25 (Adjustments)
         }
     }
 }
-
 /**
  * @brief - Função para efetuar o recebimento da mensagem de texto
  *
  * @param soquete
  * @param mensagem
  */
-<<<<<<< HEAD
-void recebeMensagemTexto(tServer *server){
-    msgT mensagemTxt; 
-=======
 void recebeMensagemTexto(tServer *server)
 {
-    msgT mensagem;
->>>>>>> e85ce25 (Adjustments)
+    msgT mensagemTxt;
     unsigned int sequencia_atual = 2;
 
     printf("< Estou aguardando recebimento do texto \n");
 
-<<<<<<< HEAD
-    while (1){
-        mensagemTxt.sequencia = -1;
-        int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1,sequencia_atual );
-=======
     while (1)
     {
-        mensagem.sequencia = -1;
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 1, sequencia_atual);
->>>>>>> e85ce25 (Adjustments)
+        mensagemTxt.sequencia = -1;
+        int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1, sequencia_atual);
 
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -173,62 +130,40 @@ void recebeMensagemTexto(tServer *server)
             continue;
         }
 
-<<<<<<< HEAD
-        if (mensagemTxt.tipo == TEXTO){
-
-         // efetua verificações e envia nack/ack
-            if ( mensagemTxt.marc_inicio == MARC_INICIO 
-            // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) || 
-            // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) - 256 )
-            ){
-                bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados,2,mensagemTxt.tam_msg);
-                printf("RECEBI tm : %d paridade: %d \n",mensagemTxt.tam_msg * 8 ,mensagemTxt.paridade );
-                printOriginalMessage(decodedMessage,mensagemTxt.tam_msg * 8); 
-                printf("\n");
-                
-                mandaRetorno(1, server->socket, mensagemTxt.sequencia);
-                ++sequencia_atual;         
-            }
-            else{
-                printf("Erro na paridade esperado: %c recebido: %d",mensagemTxt.paridade, (unsigned int)calculaParidade(mensagemTxt.dados, mensagemTxt.tam_msg));
-                mandaRetorno(0, server->socket, mensagemTxt.sequencia);
-            }
-        }else if (mensagemTxt.tipo == END){
-            printf("<Recebi a mensagem de fim de transmissão de texto \n");
-=======
-        if (mensagem.tipo == TEXTO)
+        if (mensagemTxt.tipo == TEXTO)
         {
 
             // efetua verificações e envia nack/ack
-            if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
+            if (mensagemTxt.marc_inicio == MARC_INICIO
+                // && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) ||
+                // mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) - 256 )
+            )
             {
-                bit *decodedMessage = viterbiAlgorithm(mensagem.dados, 2, mensagem.tam_msg);
-                printOriginalMessage(decodedMessage, mensagem.tam_msg);
+                bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, 2, mensagemTxt.tam_msg);
+                printf("RECEBI tm : %d paridade: %d \n", mensagemTxt.tam_msg * 8, mensagemTxt.paridade);
+                printOriginalMessage(decodedMessage, mensagemTxt.tam_msg * 8);
                 printf("\n");
 
-                mandaRetorno(1, server->socket, mensagem.sequencia);
+                mandaRetorno(1, server->socket, mensagemTxt.sequencia);
                 ++sequencia_atual;
             }
             else
             {
-                printf("Erro na paridade esperado: %c recebido: %d", mensagem.paridade, calculaParidade(mensagem.dados, mensagem.tam_msg));
-                mandaRetorno(0, server->socket, mensagem.sequencia);
+                printf("Erro na paridade esperado: %c recebido: %d", mensagemTxt.paridade, (unsigned int)calculaParidade(mensagemTxt.dados, mensagemTxt.tam_msg));
+                mandaRetorno(0, server->socket, mensagemTxt.sequencia);
             }
         }
-        else if (mensagem.tipo == END)
+        else if (mensagemTxt.tipo == END)
         {
-            printf("> Recebi a mensagem de fim de transmissão de texto \n");
->>>>>>> e85ce25 (Adjustments)
+            printf("<Recebi a mensagem de fim de transmissão de texto \n");
 
             mandaRetorno(1, server->socket, mensagemTxt.sequencia);
             server->estado = INICIO_RECEBIMENTO;
-<<<<<<< HEAD
-            return; 
-        }else{
-            printf("tipoerrado %d ",mensagemTxt.tipo );
-=======
             return;
->>>>>>> e85ce25 (Adjustments)
+        }
+        else
+        {
+            printf("tipoerrado %d ", mensagemTxt.tipo);
         }
     }
 }
@@ -240,62 +175,108 @@ void recebeMensagemTexto(tServer *server)
  * @param soquete
  * @param mensagem
  */
-void recebeMensagemArquivo(tServer *server)
+void recebeMensagemArquivo(tCliente *client)
 {
-    int proxima_sequencia = 1;
-    int janela_inicio = 1;
-    int window_size = 10;
-    int janela_fim = janela_inicio + window_size - 1;
-    msgT mensagem;
-    mensagem.sequencia = -1;
-    printf("Estou aguardando recebimento do arquivo");
+    // Open the file for writing
+    FILE *file = fopen(client->fileName, "wb");
+    if (file == NULL)
+    {
+        printf("Could not create file %s\n", client->fileName);
+        return;
+    }
+
+    int window_size = 4;        // Size of the sliding window
+    Packet window[window_size]; // Window array to hold the packets
+    int base = 0;               // Sequence number of the oldest unacknowledged packet
 
     while (1)
     {
-        int retorno_func = recebe_mensagem(server->socket, &mensagem, 1, sequencia_global);
+        // Receive packets
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(socket, &read_fds);
 
-        if (retorno_func == TIMEOUT_RETURN)
-        {
-            printf("--> Timeout ao receber mensagem\n");
+        struct timeval timeout;
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        int select_result = select(socket + 1, &read_fds, NULL, NULL, &timeout);
+        if (select_result == -1)
+        { // Error
+            perror("> Error in select\n");
+            return;
+        }
+        else if (select_result == 0)
+        { // Timeout
+            printf("> Timeout\n");
             continue;
         }
-        else if (retorno_func == 0)
-        {
-            printf("--> Erro ao receber mensagem\n");
-            continue;
+
+        Packet packet;
+        int recv_size = recv(socket, &packet, sizeof(Packet), 0);
+        if (recv_size == -1)
+        { // Error on recv
+            perror("> Error receiving packet\n");
+            return;
+        }
+        else if (recv_size == 0)
+        { // Connection closed by client
+            fprintf(stderr, "> Connection closed by client\n");
+            return;
         }
 
-        // efetua verificações e envia nack/ack
-        if (mensagem.tipo == DADOS)
+        // Check if the packet is in the window
+        if (packet.seq_num >= base && packet.seq_num < base + window_size)
         {
-            if (mensagem.sequencia < proxima_sequencia || mensagem.sequencia > janela_fim)
+            // Write data to file
+            int bytes_written = fwrite(packet.data, sizeof(bit), packet.length, file);
+            if (bytes_written != packet.length)
             {
-                printf("Mensagem fora da janela de recepção: sequencia %d\n", mensagem.sequencia);
-                continue;
+                printf("Error writing to file\n");
+                return;
+            }
+            printf("Received packet %d\n", packet.seq_num);
+
+            // Send ACK
+            Packet ack_packet;
+            initPacket(&ack_packet, NULL, 0, ACK, packet.seq_num);
+            int sent = send(socket, &ack_packet, sizeof(Packet), 0);
+            if (sent == -1)
+            {
+                perror("> Error sending ACK\n");
+                return;
             }
 
-            printf("Recebido pacote: sequencia %d\n", mensagem.sequencia);
-
-            // processa mensagem...
-
-            // atualiza a próxima sequência esperada
-            proxima_sequencia = mensagem.sequencia + 1;
-
-            // move a janela de recepção
-            if (proxima_sequencia > janela_fim)
+            // Slide window
+            while (window[0].seq_num == base)
             {
-                janela_inicio = proxima_sequencia;
-                janela_fim = janela_inicio + window_size - 1;
+                memmove(window, window + 1, sizeof(Packet) * (window_size - 1));
+                --window_size;
+                ++base;
             }
 
-            // envia ACK
-            mandaRetorno(ACK, server->socket, mensagem.sequencia);
+            // Add packet to window
+            window[window_size++] = packet;
         }
-        else if (mensagem.tipo == END)
+        else
         {
-            printf("Recebido pacote de fim\n");
-            mandaRetorno(ACK, server->socket, mensagem.sequencia);
-            // return END;
+            // Packet not in window, send NACK
+            Packet nack_packet;
+            initPacket(&nack_packet, NULL, 0, NACK, base);
+            int sent = send(socket, &nack_packet, sizeof(Packet), 0);
+            if (sent == -1)
+            {
+                perror("> Error sending NACK\n");
+                return;
+            }
+        }
+
+        // Check if all packets have been received
+        if (base == client->numPacotes)
+        {
+            break;
         }
     }
+
+    fclose(file);
 }

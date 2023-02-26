@@ -90,6 +90,12 @@ struct tListNode
     tListNode *next;
 };
 
+typedef struct packet {
+    int seq_num;
+    bit data[TAM_MAX_DADOS];
+} Packet;
+
+
 int mandaRetorno(int isAck, int soquete, int sequencia);
 
 /**********************ERROR*****************************************************************************************/
@@ -155,6 +161,13 @@ void incrementaSequencia();
 /**********************END_UTILS*****************************************************************************************************/
 
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual);
-FILE *abre_arquivo(char *nome_arquivo, char *modo); 
+
+/**
+ * @brief Open a file and return a pointer to the file
+ * @param filename -> Name of the file
+ * @param mode -> Mode of opening the file
+ * @return FILE Object
+ **/
+FILE *openFIle(char *filename, char *mode); 
 
 #endif

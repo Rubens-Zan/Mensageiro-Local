@@ -251,20 +251,15 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
 
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
-<<<<<<< HEAD
-    if (originalMessage != NULL){
-=======
     if (originalMessage != NULL)
     {
-        memset(mensagem->dados, 0, TAM_MAX_DADOS);
->>>>>>> e85ce25 (Adjustments)
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
     }
 
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
-    mensagem->tam_msg = size *2; // duplica por causa da modulção da trelica
+    mensagem->tam_msg = size * 2; // duplica por causa da modulção da trelica
     mensagem->sequencia = sequencia;
 }
 
@@ -546,10 +541,10 @@ int sendMessage(int soquete, msgT *mensagem)
         printf("Error sending message %s : %s\n", *mensagem, errno);
         return -1;
     }
-    else if (ret < (TAM_MAX_DADOS/8)) // ret is different than the max length of the data being sent 512/8=64 bytes
+    else if (ret < (TAM_MAX_DADOS / 8)) // ret is different than the max length of the data being sent 512/8=64 bytes
     {
         printf("Connection was closed before all the data could be transmitted\n");
-        return -1;
+        return -2;
     }
     // value is equal to the length of the data being sent
     printf("Data Sent successfully\n");
@@ -661,26 +656,13 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
     }
 }
 
-FILE *abre_arquivo(char *nome_arquivo, char *modo)
+FILE *openFIle(char *filename, char *mode)
 {
-
-    char arquivo[BUFFER_GIGANTE]; // buffer imenso
-
-    strcpy(arquivo, "./");
-    strcat(arquivo, nome_arquivo);
-
-    // abre o arquivo dado com o modo dado
-    // printf("ARQ %s MODO %s \n", arquivo, modo);
-
-    FILE *arq = fopen(arquivo, modo);
-
-    // retorna null se nao foi bem sucedido
-    if (!arq)
+    FILE *fp = fopen(filename, mode);
+    if (fp == NULL)
     {
-        printf("> O arquivo %s nao pode ser aberto\n", nome_arquivo);
+        printf("Error opening file %s\n", filename);
         return NULL;
     }
-
-    // retorna o arquivo
-    return arq;
+    return fp;
 }
