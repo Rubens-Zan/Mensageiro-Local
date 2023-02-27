@@ -273,7 +273,7 @@ void recebeMensagemArquivo(tServer *server)
     struct pollfd fds; // cuida do timeout
     fds.fd = server->socket;
     int retorno_poll;
-    int window_size = 3;        // Size of the sliding window
+    int window_size = 16;        // Size of the sliding window
     int base = 0;               // Sequence number of the oldest unacknowledged packet
     Packet window[window_size]; // Window array to hold the packets
    
@@ -290,7 +290,7 @@ void recebeMensagemArquivo(tServer *server)
             else if (retorno_poll < 0)
                 return;
         }
-
+        unsigned int maxSeqPossivel = 3;
         Packet packet;
         int recv_size = recv(server->socket, &packet, sizeof(packet), 0);
         if (recv_size == -1) // Error on recv
@@ -303,19 +303,21 @@ void recebeMensagemArquivo(tServer *server)
             fprintf(stderr, "> Connection closed by client\n");
             return;
         }
-        printf("=> Received %d bytes, from packet %d.\n", recv_size, packet.seq_num); // Print total amount of received bytes
+        if ( packet.seq_num > maxSeqPossivel )
+            continue;
+        printf("=> Received packet %d, Data: %s.\n", packet.seq_num, packet.data); // Print total amount of received bytes
 
         // Check if the packet is in the window
         if (packet.seq_num <= base + window_size)
         {
             // Write data to file
             int bytes_written = fwrite(packet.data, sizeof(bit), sizeof(packet), file);
-            if (bytes_written != sizeof(packet.data))
+            if (bytes_written != sizeof(packet))
             {
                 printf("> Bytes written does not match with packet data size\n");
                 return;
             }
-            printf("=> Received packet %d\n", packet.seq_num);
+            printf("=> Written %d bytes\n", bytes_written);
 
             // Send ACK
             msgT *ack_message;
@@ -380,4 +382,5 @@ void recebeMensagemArquivo(tServer *server)
     }
 
     fclose(file);
+    return;
 }

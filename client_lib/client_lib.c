@@ -355,7 +355,7 @@ int state_send_file(int soquete, tCliente *client)
     fds.fd = soquete;
 
     seqAtual = 0;
-    int window_size = 3;                    // Size of Sliding Window
+    int window_size = 16;                    // Size of Sliding Window
     int original_window_size = window_size; // Aux variable
     Packet window[window_size];             // Window array to hold the packets
     int seq_num = -1;                       // Initial sequence number
@@ -372,7 +372,7 @@ int state_send_file(int soquete, tCliente *client)
             bytes_read = fread(window[i].data, sizeof(bit), TAM_BUF, file);
             memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
             // Increase the sequence number
-            if (seq_num < 8)
+            if (seq_num < 15)
             {
                 seq_num += 1;
             }
@@ -388,6 +388,7 @@ int state_send_file(int soquete, tCliente *client)
 
         for (int i = 0; i < window_size; i++) // Send packet in the window
         {
+            sleep(1); // Give time to server before receive ack and nack
             int sent = send(soquete, &window[i], sizeof(packet), 0);
             if (sent == -1)
             {
@@ -397,14 +398,13 @@ int state_send_file(int soquete, tCliente *client)
             printf("=> Package %d of window was successfully sent, size of Packet %d: %d\n", i, i, (int)sizeof(packet));
         }
 
-        sleep(0.5); // Give time to server before receive ack and nack
         while (window_size > 0)
         {
             // cuida do timeout
             fds.events = POLLIN;
 
             msgT ack_message;
-            initMessage(&ack_message, "00000", 6, NACK, -1);
+            initMessage(&ack_message, "00000", 6, NACK, seq_num);
             retorno_poll = poll(&fds, 1, TIMEOUT);
 
             if (retorno_poll == 0)
