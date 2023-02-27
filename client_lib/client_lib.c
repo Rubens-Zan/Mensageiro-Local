@@ -363,7 +363,7 @@ int state_send_file(int soquete, tCliente *client)
     int bytes_read = 1;                     // Variable to Hold number of bytes read
     Packet packet;                          // Packet that hold data and sequence number
 
-    while (bytes_read > 0)
+    while ( !feof(file) )
     {
         window_size = original_window_size;
 

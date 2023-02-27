@@ -274,45 +274,50 @@ void recebeMensagemArquivo(tServer *server)
     fds.fd = server->socket;
     int retorno_poll;
     int window_size = 16;        // Size of the sliding window
+    Packet window[window_size];             // Window array to hold the packets
+    unsigned int maxSeqPossivel = 3;
     int base = 0;               // Sequence number of the oldest unacknowledged packet
-    Packet window[window_size]; // Window array to hold the packets
    
 
     while (1)
     {
-        fds.events = POLLIN;
-        retorno_poll = poll(&fds, 1, TIMEOUT);
-
-        if (TIMEOUT) // Timeout error
+        for (int i = 0; i < window_size; i++) // Receive packet in the window
         {
-            if (retorno_poll == 0)
-                return;
-            else if (retorno_poll < 0)
-                return;
-        }
-        unsigned int maxSeqPossivel = 3;
-        Packet packet;
-        int recv_size = recv(server->socket, &packet, sizeof(packet), 0);
-        if (recv_size == -1) // Error on recv
-        { 
-            perror("> Error receiving packet\n");
-            return;
-        }
-        else if (recv_size == 0) // Connection closed by client
-        { 
-            fprintf(stderr, "> Connection closed by client\n");
-            return;
-        }
-        if ( packet.seq_num > maxSeqPossivel )
-            continue;
-        printf("=> Received packet %d, Data: %s.\n", packet.seq_num, packet.data); // Print total amount of received bytes
+            // fds.events = POLLIN;
+            // retorno_poll = poll(&fds, 1, TIMEOUT);
 
+            // if (TIMEOUT) // Timeout error
+            // {
+            //     if (retorno_poll == 0)
+            //         return;
+            //     else if (retorno_poll < 0)
+            //         return;
+            // }
+            
+            Packet packet;
+            window[i] = packet;
+            int recv_size = recv(server->socket, &window[i], sizeof(packet), 0);
+            if (recv_size == -1) // Error on recv
+            { 
+                perror("> Error receiving packet\n");
+                return;
+            }
+            else if (recv_size == 0) // Connection closed by client
+            { 
+                fprintf(stderr, "> Connection closed by client\n");
+                return;
+            }
+            if ( window[i].seq_num > maxSeqPossivel )
+                continue;
+            printf("=> Received packet %d, Data: %s.\n", window[i].seq_num, window[i].data); // Print total amount of received bytes
+            
+        }
         // Check if the packet is in the window
-        if (packet.seq_num <= base + window_size)
+        if (window[0].seq_num <= base + window_size)
         {
             // Write data to file
-            int bytes_written = fwrite(packet.data, sizeof(bit), sizeof(packet), file);
-            if (bytes_written != sizeof(packet))
+            int bytes_written = fwrite(window[0].data, sizeof(bit), sizeof(Packet), file);
+            if (bytes_written != sizeof(Packet))
             {
                 printf("> Bytes written does not match with packet data size\n");
                 return;
@@ -321,11 +326,11 @@ void recebeMensagemArquivo(tServer *server)
 
             // Send ACK
             msgT *ack_message;
-            initMessage(ack_message, "001010", 6, ACK, packet.seq_num);
+            initMessage(ack_message, "001010", 6, ACK, window[0].seq_num );
             int sent = sendMessage(server->socket, ack_message);
             if (sent != 1)
             {
-                printf("> Error sending ACK, for packet seq_num %d\n", packet.seq_num);
+                printf("> Error sending ACK, for packet seq_num %d\n", window[0].seq_num );
                 return;
             }
 
@@ -337,17 +342,17 @@ void recebeMensagemArquivo(tServer *server)
                 ++base;
             }
             // Add packet to window
-            window[window_size++] = packet;
+            // window[window_size++] = packet;
         }
         else // Packet not in window, send NACK
         {
             // Send ACK
             msgT *ack_message;
-            initMessage(ack_message, "000000", 6, NACK, packet.seq_num);
+            initMessage(ack_message, "000000", 6, NACK, window[0].seq_num );
             int sent = sendMessage(server->socket, ack_message);
             if (sent != 1)
             {
-                printf("> Error sending NACK, for packet %d\n", packet.seq_num);
+                printf("> Error sending NACK, for packet %d\n", window[0].seq_num );
                 return;
             }
         }
