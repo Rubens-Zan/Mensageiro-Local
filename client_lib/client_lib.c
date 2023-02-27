@@ -321,17 +321,18 @@ int state_send_file(int soquete, tCliente *client)
         }
     }
 
-    char buffer[1024];
-    // Copiar a string para o buffer
-    memcpy(buffer, client->fileName, strlen(client->fileName));
-    int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
-    // Sent filename
-    if (bytes_sent < 0)
-    {
-        perror("> Dentro do send filename, Erro ao enviar mensagem");
-        exit(1);
-    }
-    printf("=> Filename sent successfully.\n");
+    // SENT FILENAME
+    // bit buffer[1024];
+    // // Copiar a string para o buffer
+    // memcpy(buffer, client->fileName, strlen(client->fileName));
+    // int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
+    // // Sent filename
+    // if (bytes_sent < 0)
+    // {
+    //     perror("> Dentro do send filename, Erro ao enviar mensagem");
+    //     exit(1);
+    // }
+    // printf("=> Filename sent successfully.\n");
 
     int window_size = 3; // Size of Sliding Window
     int original_window_size = window_size;
@@ -354,6 +355,7 @@ int state_send_file(int soquete, tCliente *client)
             printf("\n--> Packet - %d, Sequence Number: %d, Number of bytes Read: %d,  Data: %s\n", i, seq_num, bytes_read, window[i].data); // Print of variables
         }
 
+        
         for (int i = 0; i < window_size; i++) // Send packet in the window
         {
             int sent = send(soquete, &window[i], sizeof(packet), 0);
@@ -365,6 +367,7 @@ int state_send_file(int soquete, tCliente *client)
             printf("=> Package %d of window was successfully sent\n", i);
         }
 
+        sleep(1); // Give time to server before receive ack and nack
         while (window_size > 0)
         {
             // cuida do timeout
@@ -438,6 +441,7 @@ int state_send_file(int soquete, tCliente *client)
         }
 
         memset(packet.data, 0, chunk_size); // Reset buffer with 0;
+
     }
 
     // Envia mensagem do tipo FIM

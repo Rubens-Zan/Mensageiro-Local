@@ -179,18 +179,21 @@ void recebeMensagemTexto(tServer *server)
 void recebeMensagemArquivo(tServer *server)
 {
     printf("----> On receive media\n");
-    char buffer[1024];
-    int bytes_lidos = recv(server->socket, buffer, sizeof(buffer), 0);
-    if (bytes_lidos < 0)
-    {
-        perror("Erro ao receber a mensagem");
-        exit(1);
-    }
-    // Adiciona um caractere nulo ao final do buffer para transformá-lo em uma string
-    buffer[bytes_lidos] = '\0';
-    printf("=> Filename received: %s\n", buffer);
+
+    // RECEIVE FILENAME
+    // char buffer[1024];
+    // int bytes_lidos = recv(server->socket, buffer, sizeof(buffer), 0);
+    // if (bytes_lidos < 0)
+    // {
+    //     perror("Erro ao receber a mensagem");
+    //     exit(1);
+    // }
+    // // Adiciona um caractere nulo ao final do buffer para transformá-lo em uma string
+    // buffer[bytes_lidos] = '\0';
+    // printf("=> Filename received: %s\n", buffer);
 
     // Open the file for writing
+    char *buffer = "./received.txt";
     FILE *file = fopen(buffer, "wb");
     if (file == NULL)
     {
@@ -199,6 +202,9 @@ void recebeMensagemArquivo(tServer *server)
     }
     printf("=> File %s Successfully created on server.\n", buffer);
 
+    struct pollfd fds; // cuida do timeout
+    int retorno_poll;
+
     int window_size = 3;        // Size of the sliding window
     int base = 0;               // Sequence number of the oldest unacknowledged packet
     Packet window[window_size]; // Window array to hold the packets
@@ -206,24 +212,16 @@ void recebeMensagemArquivo(tServer *server)
 
     while (1)
     {
-        // Receive packets
-        fd_set read_fds;
-        FD_ZERO(&read_fds);
-        FD_SET(server->socket, &read_fds);
+        fds.fd = server->socket;
+        fds.events = POLLIN;
+        retorno_poll = poll(&fds, 1, TIMEOUT);
 
-        struct timeval timeout;
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-
-        int select_result = select(server->socket + 1, &read_fds, NULL, NULL, &timeout);
-        if (select_result == -1)
-        { // Error
-            perror("> Error in select\n");
-            return;
-        }
-        else if (select_result == 0)
-        { // Timeout
-            printf("> Timeout\n");
+        if (TIMEOUT) // Timeout error
+        {
+            if (retorno_poll == 0)
+                return;
+            else if (retorno_poll < 0)
+                return;
         }
 
         Packet packet;
@@ -238,6 +236,7 @@ void recebeMensagemArquivo(tServer *server)
             fprintf(stderr, "> Connection closed by client\n");
             return;
         }
+        printf("=> Received %d bytes\n", recv_size); // Print total amount of received bytes
 
         // Check if the packet is in the window
         if (packet.seq_num <= base + window_size)
@@ -284,13 +283,11 @@ void recebeMensagemArquivo(tServer *server)
             }
         }
 
-        // Envia mensagem do tipo FIM
-        msgT *end_message;
-        struct pollfd fds; // cuida do timeout
-
+        // Recebe mensagem do tipo FIM
         fds.fd = server->socket;
         fds.events = POLLIN;
-        int retorno_poll = poll(&fds, 1, TIMEOUT);
+        retorno_poll = poll(&fds, 1, TIMEOUT);
+        msgT *end_message;
 
         if (TIMEOUT) // Timeout error
         {
