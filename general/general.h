@@ -30,8 +30,8 @@
 #define UTF8CHARSIZE 8
 // #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
 
-// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(10) // PARA MOSTRAR SEM ERROS 
-#define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(16) // PARA MOSTRAR OS REENVIOS DE MENSAGEM NA MENSAGEM DE TEXTO 
+// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(10) // PARA MOSTRAR SEM ERROS
+#define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(16) // PARA MOSTRAR OS REENVIOS DE MENSAGEM NA MENSAGEM DE TEXTO
 
 #define TAM_BUF 100
 #define TAM_MAX_DADOS 1024 // 128 bytes = 1024 bits
@@ -46,14 +46,14 @@ typedef unsigned char bit;
 
 typedef struct msgT
 {
-    unsigned int marc_inicio:8; // Marcador de início
-    unsigned int tam_msg : 11;     // Tamanho da mensagem 
-    unsigned int sequencia : 4;   // Número da mensagem (até 16)
-    unsigned int tipo : 6;        // Tipo da mensagem
-    unsigned char dados[TAM_MAX_DADOS];       // Buffer dos dados [64bytes]
+    unsigned int marc_inicio : 8;       // Marcador de início
+    unsigned int tam_msg : 11;          // Tamanho da mensagem
+    unsigned int sequencia : 4;         // Número da mensagem (até 16)
+    unsigned int tipo : 6;              // Tipo da mensagem
+    unsigned char dados[TAM_MAX_DADOS]; // Buffer dos dados [64bytes]
     // bit paridade:6;    // Paridade
-    unsigned int paridade:6;    // Paridade
-    int numero_ack;      //número do ACK
+    unsigned int paridade : 6; // Paridade
+    int numero_ack;            // número do ACK
 } msgT;
 
 typedef enum
@@ -96,11 +96,11 @@ struct tListNode
     tListNode *next;
 };
 
-typedef struct packet {
-    unsigned int seq_num;
+typedef struct packet
+{
+    unsigned int seq_num : 4;
     bit data[1024];
 } Packet;
-
 
 int mandaRetorno(int isAck, int soquete, int sequencia);
 

@@ -276,11 +276,10 @@ void recebeMensagemArquivo(tServer *server)
     int window_size = 3;        // Size of the sliding window
     int base = 0;               // Sequence number of the oldest unacknowledged packet
     Packet window[window_size]; // Window array to hold the packets
-    int chunk_size = 1024;
+   
 
     while (1)
     {
-        
         fds.events = POLLIN;
         retorno_poll = poll(&fds, 1, TIMEOUT);
 
@@ -310,7 +309,7 @@ void recebeMensagemArquivo(tServer *server)
         if (packet.seq_num <= base + window_size)
         {
             // Write data to file
-            int bytes_written = fwrite(packet.data, sizeof(bit), sizeof(packet.data), file);
+            int bytes_written = fwrite(packet.data, sizeof(bit), TAM_BUF, file);
             if (bytes_written != sizeof(packet.data))
             {
                 printf("> Bytes written does not match with packet data size\n");

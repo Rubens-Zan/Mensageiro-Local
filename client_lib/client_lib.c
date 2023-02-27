@@ -148,7 +148,7 @@ void state_init(tCliente *client)
             printf("> SEND:");
             client->fileNameSize = getFileName(filename_c);
             client->estado = ENVIA_ARQUIVO;
-            memcpy(client->fileName, filename_c, client->fileNameSize * sizeof(unsigned int) );
+            memcpy(client->fileName, filename_c, client->fileNameSize * sizeof(unsigned int));
             return;
         }
         else
@@ -303,13 +303,14 @@ void state_create_message(int soquete, tCliente *client)
 int state_send_file(int soquete, tCliente *client)
 {
     // File opening
-    char nomeDoArquivo[80]; 
+    char nomeDoArquivo[80];
 
-    for (unsigned int i=0;i < client->fileNameSize;++i){
+    for (unsigned int i = 0; i < client->fileNameSize; ++i)
+    {
         nomeDoArquivo[i] = (char)client->fileName[i];
     }
 
-    FILE *file = openFile( nomeDoArquivo, "rb");
+    FILE *file = openFile(nomeDoArquivo, "rb");
     if (file == NULL)
     {
         printf("File not opened, try again, %s \n", nomeDoArquivo);
@@ -343,7 +344,7 @@ int state_send_file(int soquete, tCliente *client)
             break;
         case TIMEOUT:
             ack = 1;
-            printf("TIMEOUT!!");
+            // printf("TIMEOUT!!");
             client->estado = INICIO;
             return -1; // retorna erro ? verificar
         }
@@ -354,23 +355,33 @@ int state_send_file(int soquete, tCliente *client)
     fds.fd = soquete;
 
     seqAtual = 0;
-    int window_size = 3; // Size of Sliding Window
+    int window_size = 3;                    // Size of Sliding Window
     int original_window_size = window_size; // Aux variable
-    Packet window[window_size]; // Window array to hold the packets
-    int seq_num = -1;           // Initial sequence number
-    int base = 0;               // the sequence number of the oldest unacknowledged packet
-    int bytes_read = 1;         // Variable to Hold number of bytes read
-    Packet packet;              // Packet that hold data and sequence number
-    int chunk_size = 1024;
+    Packet window[window_size];             // Window array to hold the packets
+    int seq_num = -1;                       // Initial sequence number
+    int base = 0;                           // the sequence number of the oldest unacknowledged packet
+    int bytes_read = 1;                     // Variable to Hold number of bytes read
+    Packet packet;                          // Packet that hold data and sequence number
 
     while (bytes_read > 0)
     {
         window_size = original_window_size;
+
         for (int i = 0; i < window_size && bytes_read > 0; i++) // Create Packets in the window
         {
-            bytes_read = fread(window[i].data, sizeof(bit), chunk_size, file);
+            bytes_read = fread(window[i].data, sizeof(bit), TAM_BUF, file);
             memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
-            packet.seq_num = ++seq_num;                      // Packet sequence number receive actual sequence number
+            // Increase the sequence number
+            if (seq_num < 8)
+            {
+                seq_num += 1;
+            }
+            else
+            {
+                printf("=> Reseting sequence number %d to 0\n", seq_num);
+                seq_num = 0;
+            }
+            packet.seq_num = seq_num; // Packet sequence number receive actual sequence number
             window[i] = packet;
             printf("\n--> Packet - %d, Sequence Number: %d, Number of bytes Read: %d,  Data: %s\n", i, window[i].seq_num, bytes_read, window[i].data); // Print of variables
         }
@@ -428,9 +439,9 @@ int state_send_file(int soquete, tCliente *client)
                 {
                     if (ack_message.sequencia == (window_size - 1))
                     {
-                            window_size = 0;
-                            printf("=> Window size is %d, reset\n", window_size);
-                            break;
+                        window_size = 0;
+                        printf("=> Window size is %d, reset\n", window_size);
+                        break;
                     }
                     else if (window[i].seq_num < ack_message.sequencia)
                     {
@@ -457,26 +468,8 @@ int state_send_file(int soquete, tCliente *client)
             }
         }
 
-        // Increase the sequence number
-        if (seq_num < 8)
-        {
-            printf("=> Increasing sequence number %d in one\n", seq_num);
-            ++seq_num;
-        }
-        else
-        {
-            printf("=> Reseting sequence number %d to 0\n", seq_num);
-            seq_num = 0;
-        }
-
-        for (int i = 0; i < original_window_size; ++i)
-        {
-            printf("=> Reseting window at index %d\n", i);
-            memset(window[i].data, 0, chunk_size); // Reset buffer with 0;
-        }
-
         printf("=> Reseting packet\n");
-        memset(packet.data, 0, chunk_size); // Reset buffer with 0;
+        memset(packet.data, 0, TAM_BUF); // Reset buffer with 0;
     }
 
     // Envia mensagem do tipo FIM
@@ -517,7 +510,6 @@ int state_send_file(int soquete, tCliente *client)
         {
             return 0; // File sent
         }
-        
     }
     if (retry)
     {
