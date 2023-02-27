@@ -24,7 +24,7 @@ typedef enum tState
 typedef struct tCliente
 {
     tClientState estado;
-    char *fileName;
+    char fileName[50];
     msgT *message;
     int socket;
     unsigned int sequencia_atual;
