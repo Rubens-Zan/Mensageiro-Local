@@ -98,7 +98,7 @@ struct tListNode
 
 typedef struct packet {
     unsigned int seq_num;
-    bit data[TAM_MAX_DADOS];
+    bit data[1024];
 } Packet;
 
 

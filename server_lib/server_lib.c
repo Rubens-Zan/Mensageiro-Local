@@ -195,15 +195,15 @@ void recebeMensagemTexto(tServer *server)
 
 void recebeMensagemArquivo(tServer *server)
 {
-    printf("----> On receive media\n");
+    printf("----> Receive media ACTIVATED <----\n"); // Function init
+
+    // Receive filename from client
     int fileNameReceived = 0;
     msgT mensagemInit;
     mensagemInit.sequencia = -1;
     unsigned int filename_int[BUFFER_GIGANTE];
-    char nomeDoArquivo[BUFFER_GIGANTE]; 
-
+    char nomeDoArquivo[50]; 
     unsigned int tentativasReceberNome = 0;
-
     while (!fileNameReceived)
     {
         int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 1, 2);
@@ -253,10 +253,14 @@ void recebeMensagemArquivo(tServer *server)
         }
 
     }
-    printf("NOME DO ARQUIVO: %s \n",nomeDoArquivo);
+    printf("> Filename Received: %s \n",nomeDoArquivo);
 
+    // Concatenate received filename with string "server_"
+    char filename[100];
+    strcpy(filename, "./server_");
+    strcat(filename, nomeDoArquivo);
     // Open the file for writing
-    char *buffer = "./received.txt";
+    char *buffer = filename;
     FILE *file = fopen(buffer, "wb");
     if (file == NULL)
     {
@@ -265,17 +269,18 @@ void recebeMensagemArquivo(tServer *server)
     }
     printf("=> File %s Successfully created on server.\n", buffer);
 
+    // Treat data received
     struct pollfd fds; // cuida do timeout
+    fds.fd = server->socket;
     int retorno_poll;
-
     int window_size = 3;        // Size of the sliding window
     int base = 0;               // Sequence number of the oldest unacknowledged packet
     Packet window[window_size]; // Window array to hold the packets
-    int chunk_size = 256;
+    int chunk_size = 1024;
 
     while (1)
     {
-        fds.fd = server->socket;
+        
         fds.events = POLLIN;
         retorno_poll = poll(&fds, 1, TIMEOUT);
 
@@ -289,17 +294,17 @@ void recebeMensagemArquivo(tServer *server)
 
         Packet packet;
         int recv_size = recv(server->socket, &packet, sizeof(Packet), 0);
-        if (recv_size == -1)
-        { // Error on recv
+        if (recv_size == -1) // Error on recv
+        { 
             perror("> Error receiving packet\n");
             return;
         }
-        else if (recv_size == 0)
-        { // Connection closed by client
+        else if (recv_size == 0) // Connection closed by client
+        { 
             fprintf(stderr, "> Connection closed by client\n");
             return;
         }
-        printf("=> Received %d bytes\n", recv_size); // Print total amount of received bytes
+        printf("=> Received %d bytes, from packet %d.\n", recv_size, packet.seq_num); // Print total amount of received bytes
 
         // Check if the packet is in the window
         if (packet.seq_num <= base + window_size)

@@ -303,7 +303,7 @@ void state_create_message(int soquete, tCliente *client)
 int state_send_file(int soquete, tCliente *client)
 {
     // File opening
-    char nomeDoArquivo[TAM_BUF]; 
+    char nomeDoArquivo[80]; 
 
     for (unsigned int i=0;i < client->fileNameSize;++i){
         nomeDoArquivo[i] = (char)client->fileName[i];
@@ -349,27 +349,18 @@ int state_send_file(int soquete, tCliente *client)
         }
     }
 
-    // SENT FILENAME
-    // bit buffer[1024];
-    // // Copiar a string para o buffer
-    // memcpy(buffer, client->fileName, strlen(client->fileName));
-    // int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
-    // // Sent filename
-    // if (bytes_sent < 0)
-    // {
-    //     perror("> Dentro do send filename, Erro ao enviar mensagem");
-    //     exit(1);
-    // }
-    // printf("=> Filename sent successfully.\n");
+    struct pollfd fds; // cuida do timeout
+    int retorno_poll;
+    fds.fd = soquete;
 
     int window_size = 3; // Size of Sliding Window
-    int original_window_size = window_size;
+    int original_window_size = window_size; // Aux variable
     Packet window[window_size]; // Window array to hold the packets
     int seq_num = -1;           // Initial sequence number
     int base = 0;               // the sequence number of the oldest unacknowledged packet
     int bytes_read = 1;         // Variable to Hold number of bytes read
     Packet packet;              // Packet that hold data and sequence number
-    int chunk_size = 256;
+    int chunk_size = 1024;
 
     while (bytes_read > 0)
     {
@@ -380,7 +371,7 @@ int state_send_file(int soquete, tCliente *client)
             memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
             packet.seq_num = ++seq_num;                      // Packet sequence number receive actual sequence number
             window[i] = packet;
-            printf("\n--> Packet - %d, Sequence Number: %d, Number of bytes Read: %d,  Data: %s\n", i, seq_num, bytes_read, window[i].data); // Print of variables
+            printf("\n--> Packet - %d, Sequence Number: %d, Number of bytes Read: %d,  Data: %s\n", i, window[i].seq_num, bytes_read, window[i].data); // Print of variables
         }
 
         for (int i = 0; i < window_size; i++) // Send packet in the window
@@ -391,20 +382,18 @@ int state_send_file(int soquete, tCliente *client)
                 perror("> Error sending packet\n");
                 return 1;
             }
-            printf("=> Package %d of window was successfully sent\n", i);
+            printf("=> Package %d of window was successfully sent, size of Packet %d: %d\n", i, i, (int)sizeof(packet));
         }
 
-        sleep(1); // Give time to server before receive ack and nack
+        sleep(0.5); // Give time to server before receive ack and nack
         while (window_size > 0)
         {
             // cuida do timeout
-            struct pollfd fds;
-            fds.fd = soquete;
             fds.events = POLLIN;
 
             msgT ack_message;
             initMessage(&ack_message, "00000", 6, NACK, -1);
-            int retorno_poll = poll(&fds, 1, TIMEOUT);
+            retorno_poll = poll(&fds, 1, TIMEOUT);
 
             if (retorno_poll == 0)
                 return TIMEOUT_RETURN;
@@ -464,9 +453,11 @@ int state_send_file(int soquete, tCliente *client)
 
         for (int i = 0; i < original_window_size; ++i)
         {
+            printf("=> Reseting window at index %d\n", i);
             memset(window[i].data, 0, chunk_size); // Reset buffer with 0;
         }
 
+        printf("=> Reseting packet\n");
         memset(packet.data, 0, chunk_size); // Reset buffer with 0;
     }
 
@@ -479,11 +470,8 @@ int state_send_file(int soquete, tCliente *client)
     }
     while (1) // Receive ACK for end Message
     {
-        struct pollfd fds; // cuida do timeout
-
-        fds.fd = soquete;
         fds.events = POLLIN;
-        int retorno_poll = poll(&fds, 1, TIMEOUT);
+        retorno_poll = poll(&fds, 1, TIMEOUT);
 
         if (TIMEOUT) // Timeout error
         {
