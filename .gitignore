@@ -1,4 +1,5 @@
 .vscode/
+*0000
 *.o
 client
 server
