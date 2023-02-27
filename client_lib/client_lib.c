@@ -167,7 +167,7 @@ void state_create_message(int soquete, tCliente *client)
             printf("\n");
             #endif
             
-            printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG);
+            printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, (totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG)+1);
             // 000001 = TEXTO
             initMessage(&mensagem,  "000001",6, INIT, 1);
 
