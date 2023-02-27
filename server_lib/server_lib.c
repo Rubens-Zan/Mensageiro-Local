@@ -66,7 +66,8 @@ void recebeMensagemServerLoop(tServer *server)
         )
         {
 
-            if (mensagem.marc_inicio == MARC_INICIO && mensagem.paridade == calculaParidade(mensagem.dados, mensagem.tam_msg))
+            if (mensagemInit.marc_inicio == MARC_INICIO) 
+            // && mensagemInit.paridade == calculaParidade(mensagemInit.dados, mensagemInit.tam_msg))
             {
 
                 if (valor == TEXTO)
@@ -175,109 +176,109 @@ void recebeMensagemTexto(tServer *server)
  * @param soquete
  * @param mensagem
  */
-void recebeMensagemArquivo(tCliente *client)
+void recebeMensagemArquivo(tServer *server)
 {
     // Open the file for writing
-    FILE *file = fopen(client->fileName, "wb");
-    if (file == NULL)
-    {
-        printf("> Could not create file %s\n", client->fileName);
-        return;
-    }
-    printf("=> File %s Successfully created on server.\n", client->filename)
+    // FILE *file = fopen(client->fileName, "wb");
+    // if (file == NULL)
+    // {
+    //     printf("> Could not create file %s\n", client->fileName);
+    //     return;
+    // }
+    // printf("=> File %s Successfully created on server.\n", client->filename)
 
-    int window_size = 4;        // Size of the sliding window
-    Packet window[window_size]; // Window array to hold the packets
-    int base = 0;               // Sequence number of the oldest unacknowledged packet
+    // int window_size = 4;        // Size of the sliding window
+    // Packet window[window_size]; // Window array to hold the packets
+    // int base = 0;               // Sequence number of the oldest unacknowledged packet
 
-    while (1)
-    {
-        // Receive packets
-        fd_set read_fds;
-        FD_ZERO(&read_fds);
-        FD_SET(socket, &read_fds);
+    // while (1)
+    // {
+    //     // Receive packets
+    //     fd_set read_fds;
+    //     FD_ZERO(&read_fds);
+    //     FD_SET(socket, &read_fds);
 
-        struct timeval timeout;
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
+    //     struct timeval timeout;
+    //     timeout.tv_sec = 1;
+    //     timeout.tv_usec = 0;
 
-        int select_result = select(socket + 1, &read_fds, NULL, NULL, &timeout);
-        if (select_result == -1)
-        { // Error
-            perror("> Error in select\n");
-            return;
-        }
-        else if (select_result == 0)
-        { // Timeout
-            printf("> Timeout\n");
-            continue;
-        }
+    //     int select_result = select(socket + 1, &read_fds, NULL, NULL, &timeout);
+    //     if (select_result == -1)
+    //     { // Error
+    //         perror("> Error in select\n");
+    //         return;
+    //     }
+    //     else if (select_result == 0)
+    //     { // Timeout
+    //         printf("> Timeout\n");
+    //         continue;
+    //     }
 
-        Packet packet;
-        int recv_size = recv(socket, &packet, sizeof(Packet), 0);
-        if (recv_size == -1)
-        { // Error on recv
-            perror("> Error receiving packet\n");
-            return;
-        }
-        else if (recv_size == 0)
-        { // Connection closed by client
-            fprintf(stderr, "> Connection closed by client\n");
-            return;
-        }
+    //     Packet packet;
+    //     int recv_size = recv(socket, &packet, sizeof(Packet), 0);
+    //     if (recv_size == -1)
+    //     { // Error on recv
+    //         perror("> Error receiving packet\n");
+    //         return;
+    //     }
+    //     else if (recv_size == 0)
+    //     { // Connection closed by client
+    //         fprintf(stderr, "> Connection closed by client\n");
+    //         return;
+    //     }
 
-        // Check if the packet is in the window
-        if (packet.seq_num >= base && packet.seq_num < base + window_size)
-        {
-            // Write data to file
-            int bytes_written = fwrite(packet.data, sizeof(bit), packet.length, file);
-            if (bytes_written != packet.length)
-            {
-                printf("Error writing to file\n");
-                return;
-            }
-            printf("Received packet %d\n", packet.seq_num);
+    //     // Check if the packet is in the window
+    //     if (packet.seq_num >= base && packet.seq_num < base + window_size)
+    //     {
+    //         // Write data to file
+    //         int bytes_written = fwrite(packet.data, sizeof(bit), packet.length, file);
+    //         if (bytes_written != packet.length)
+    //         {
+    //             printf("Error writing to file\n");
+    //             return;
+    //         }
+    //         printf("Received packet %d\n", packet.seq_num);
 
-            // Send ACK
-            Packet ack_packet;
-            initPacket(&ack_packet, NULL, 0, ACK, packet.seq_num);
-            int sent = send(socket, &ack_packet, sizeof(Packet), 0);
-            if (sent == -1)
-            {
-                perror("> Error sending ACK\n");
-                return;
-            }
+    //         // Send ACK
+    //         Packet ack_packet;
+    //         initPacket(&ack_packet, NULL, 0, ACK, packet.seq_num);
+    //         int sent = send(socket, &ack_packet, sizeof(Packet), 0);
+    //         if (sent == -1)
+    //         {
+    //             perror("> Error sending ACK\n");
+    //             return;
+    //         }
 
-            // Slide window
-            while (window[0].seq_num == base)
-            {
-                memmove(window, window + 1, sizeof(Packet) * (window_size - 1));
-                --window_size;
-                ++base;
-            }
+    //         // Slide window
+    //         while (window[0].seq_num == base)
+    //         {
+    //             memmove(window, window + 1, sizeof(Packet) * (window_size - 1));
+    //             --window_size;
+    //             ++base;
+    //         }
 
-            // Add packet to window
-            window[window_size++] = packet;
-        }
-        else
-        {
-            // Packet not in window, send NACK
-            Packet nack_packet;
-            initPacket(&nack_packet, NULL, 0, NACK, base);
-            int sent = send(socket, &nack_packet, sizeof(Packet), 0);
-            if (sent == -1)
-            {
-                perror("> Error sending NACK\n");
-                return;
-            }
-        }
+    //         // Add packet to window
+    //         window[window_size++] = packet;
+    //     }
+    //     else
+    //     {
+    //         // Packet not in window, send NACK
+    //         Packet nack_packet;
+    //         initPacket(&nack_packet, NULL, 0, NACK, base);
+    //         int sent = send(socket, &nack_packet, sizeof(Packet), 0);
+    //         if (sent == -1)
+    //         {
+    //             perror("> Error sending NACK\n");
+    //             return;
+    //         }
+    //     }
 
-        // Check if all packets have been received
-        if (base == client->numPacotes)
-        {
-            break;
-        }
-    }
+    //     // Check if all packets have been received
+    //     if (base == client->numPacotes)
+    //     {
+    //         break;
+    //     }
+    // }
 
-    fclose(file);
+    // fclose(file);
 }

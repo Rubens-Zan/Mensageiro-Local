@@ -249,157 +249,157 @@ void state_create_message(int soquete, tCliente *client)
 
 void state_send_file(int soquete, tCliente *client)
 {
-    printf("\n=> FILE to be sent: %s\n", client->filename);
-    // File opening
-    FILE *file = openFile(client->fileName, "rb");
-    if (fp == NULL)
-    {
-        printf("File not opened, try again\n");
-        state_send_file(int soquete, tCliente *client);
-    }
+    // printf("\n=> FILE to be sent: %s\n", client->filename);
+    // // File opening
+    // FILE *file = openFile(client->fileName, "rb");
+    // if (fp == NULL)
+    // {
+    //     printf("File not opened, try again\n");
+    //     state_send_file(int soquete, tCliente *client);
+    // }
 
-    // Send message of Initialization
-    msgT ini_message;
-    initMessage(&ini_message, "10000", 6, INIT, 1);
-    int send_ret = sendMessage(client->soquete, &ini_message);
-    if ( send_ret == 0)
-    {
-        printf("=> Initialization message sent successfully, proceeding with sending file.\n");
-    }
-    else
-    {
-        printf("> Initialization message failed to be send\n")
-    }
+    // // Send message of Initialization
+    // msgT ini_message;
+    // initMessage(&ini_message, "10000", 6, INIT, 1);
+    // int send_ret = sendMessage(client->soquete, &ini_message);
+    // if ( send_ret == 0)
+    // {
+    //     printf("=> Initialization message sent successfully, proceeding with sending file.\n");
+    // }
+    // else
+    // {
+    //     printf("> Initialization message failed to be send\n")
+    // }
 
-    int window_size = 4;        // Size of Sliding Window
-    Packet window[window_size]; // Window array to hold the packets
-    int seq_num = 0;            // Initial sequence number
-    int base = 0;               // the sequence number of the oldest unacknowledged packet
-    int bytes_read;             // Variable to Hold number of bytes read
+    // int window_size = 4;        // Size of Sliding Window
+    // Packet window[window_size]; // Window array to hold the packets
+    // int seq_num = 0;            // Initial sequence number
+    // int base = 0;               // the sequence number of the oldest unacknowledged packet
+    // int bytes_read;             // Variable to Hold number of bytes read
 
-    while (bytes_read > 0)
-    {
-        for (int i = 0; i < window_size && bytes_read > 0; ++i) // Create Packets in the window
-        {
-            bytes_read = fread(window[i].data, sizeof(bit), TAM_MAX_DADOS, file;
-            Packet packet; // construct packet
-            memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
-            packet.seq_num = seq_num; // Packet sequence number receive actual sequence number
-            window[i] = packet;
-            printf("--> Number of bytes Read: %d, Packet %d:, Data: %s\n", bytes_read, i, window[i].data); // Print of variables
-        }
+    // while (bytes_read > 0)
+    // {
+    //     for (int i = 0; i < window_size && bytes_read > 0; ++i) // Create Packets in the window
+    //     {
+    //         bytes_read = fread(window[i].data, sizeof(bit), TAM_MAX_DADOS, file;
+    //         Packet packet; // construct packet
+    //         memcpy(packet.data, window[i].data, bytes_read); // copies data from the window array to the packet buffer
+    //         packet.seq_num = seq_num; // Packet sequence number receive actual sequence number
+    //         window[i] = packet;
+    //         printf("--> Number of bytes Read: %d, Packet %d:, Data: %s\n", bytes_read, i, window[i].data); // Print of variables
+    //     }
 
-        for (int i = 0; i < window_size; ++i) // Send packet in the window
-        {
-            int sent = send(sock, &window[i], sizeof(packet), 0);
-            if (sent == -1)
-            {
-                perror("> Error sending packet\n");
-                return 1;
-            }
-            printf("=> Package %d of window was successfully sent\n", i);
+    //     for (int i = 0; i < window_size; ++i) // Send packet in the window
+    //     {
+    //         int sent = send(sock, &window[i], sizeof(packet), 0);
+    //         if (sent == -1)
+    //         {
+    //             perror("> Error sending packet\n");
+    //             return 1;
+    //         }
+    //         printf("=> Package %d of window was successfully sent\n", i);
 
-            // Increase the sequence number
-            if (seq_num < 8)
-            {
-                printf("=> Increasing sequence number %d in one\n", seq_num);
-                ++seq_num;
-            }
-            else
-            {
-                printf("=> Reseting sequence number %d to 0\n", seq_num);
-                seq_num = 0;
-            }
-        }
+    //         // Increase the sequence number
+    //         if (seq_num < 8)
+    //         {
+    //             printf("=> Increasing sequence number %d in one\n", seq_num);
+    //             ++seq_num;
+    //         }
+    //         else
+    //         {
+    //             printf("=> Reseting sequence number %d to 0\n", seq_num);
+    //             seq_num = 0;
+    //         }
+    //     }
 
-        // check for ACKs and NACKs
-        while (1)
-        {
-            fd_set read_fds;
-            FD_ZERO(&read_fds);
-            FD_SET(sock, &read_fds);
+    //     // check for ACKs and NACKs
+    //     while (1)
+    //     {
+    //         fd_set read_fds;
+    //         FD_ZERO(&read_fds);
+    //         FD_SET(sock, &read_fds);
 
-            struct timeval timeout;
-            timeout.tv_sec = 1;
-            timeout.tv_usec = 0;
+    //         struct timeval timeout;
+    //         timeout.tv_sec = 1;
+    //         timeout.tv_usec = 0;
 
-            int select_result = select(soquete + 1, &read_fds, NULL, NULL, &timeout);
-            if (select_result == -1) // Error
-            {
-                perror("> Error in select\n");
-                return 1;
-            }
-            else if (select_result == 0) // timeout expired, retransmit packets
-            {
-                for (int i = base; i < seq_num; i++)
-                {
-                    int sent = send(soquete, &window[i % window_size], sizeof(Packet), 0);
-                    if (sent == -1)
-                    {
-                        perror("> Error retransmitting packet\n");
-                        return 1;
-                    }
-                    printf("=> Package %d of window was successfully sent\n", i % window_size);
-                }
-            }
-            else // acknowledgement received
-            {
-                Packet ack_packet;
-                int recv_size = recv(soquete, &ack_packet, sizeof(Packet), 0);
-                if (recv_size == -1) // Error on recv
-                {
-                    perror("> Error receiving acknowledgement\n");
-                    return 1;
-                }
-                else if (recv_size == 0) // Timeout
-                {
-                    fprintf(stderr, "> Server closed connection\n");
-                    return 1;
-                }
-                else // Success
-                {
-                    printf("=> ACK Received\n");
-                    base = ack_packet.seq_num + 1;
-                }
-            }
+    //         int select_result = select(soquete + 1, &read_fds, NULL, NULL, &timeout);
+    //         if (select_result == -1) // Error
+    //         {
+    //             perror("> Error in select\n");
+    //             return 1;
+    //         }
+    //         else if (select_result == 0) // timeout expired, retransmit packets
+    //         {
+    //             for (int i = base; i < seq_num; i++)
+    //             {
+    //                 int sent = send(soquete, &window[i % window_size], sizeof(Packet), 0);
+    //                 if (sent == -1)
+    //                 {
+    //                     perror("> Error retransmitting packet\n");
+    //                     return 1;
+    //                 }
+    //                 printf("=> Package %d of window was successfully sent\n", i % window_size);
+    //             }
+    //         }
+    //         else // acknowledgement received
+    //         {
+    //             Packet ack_packet;
+    //             int recv_size = recv(soquete, &ack_packet, sizeof(Packet), 0);
+    //             if (recv_size == -1) // Error on recv
+    //             {
+    //                 perror("> Error receiving acknowledgement\n");
+    //                 return 1;
+    //             }
+    //             else if (recv_size == 0) // Timeout
+    //             {
+    //                 fprintf(stderr, "> Server closed connection\n");
+    //                 return 1;
+    //             }
+    //             else // Success
+    //             {
+    //                 printf("=> ACK Received\n");
+    //                 base = ack_packet.seq_num + 1;
+    //             }
+    //         }
 
-            if (base == seq_num) // all packets have been acknowledged
-            {
-                break;
-            }
-        }
+    //         if (base == seq_num) // all packets have been acknowledged
+    //         {
+    //             break;
+    //         }
+    //     }
 
-        for (int i = 0; i < window_size; ++i)
-        {
-            memset(window[i].data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
-        }
+    //     for (int i = 0; i < window_size; ++i)
+    //     {
+    //         memset(window[i].data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
+    //     }
 
-        memset(packet.data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
-    }
+    //     memset(packet.data, 0, TAM_MAX_DADOS); // Reset buffer with 0;
+    // }
 
-    // Envia mensagem do tipo FIM
-    initMessage(&mensagem, NULL, TAM_MAX_DADOS, END, seq_num);
-    if (!sendMessage(soquete, &mensagem))
-    {
-        perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
-    }
+    // // Envia mensagem do tipo FIM
+    // initMessage(&mensagem, NULL, TAM_MAX_DADOS, END, seq_num);
+    // if (!sendMessage(soquete, &mensagem))
+    // {
+    //     perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
+    // }
 
-    // Recebe ACK para a mensagem de FIM
-    while (1)
-    {
-        switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
-        {
-        case ACK: // Success
-            printf("=> Received ACK for end of transmission\n");
-            return;
-        case NACK: // Failed
-            printf("=> Recebeu NACK for end of transmission\n");
-            return;
-        default: // Other cases
-            printf("=> Not recognized\n");
-            return;
-        }
-    }
+    // // Recebe ACK para a mensagem de FIM
+    // while (1)
+    // {
+    //     switch (recebeRetorno(soquete, &mensagem, &contador, seq_num))
+    //     {
+    //     case ACK: // Success
+    //         printf("=> Received ACK for end of transmission\n");
+    //         return;
+    //     case NACK: // Failed
+    //         printf("=> Recebeu NACK for end of transmission\n");
+    //         return;
+    //     default: // Other cases
+    //         printf("=> Not recognized\n");
+    //         return;
+    //     }
+    // }
 }
 
 void state_end(tCliente *client)

@@ -13,7 +13,7 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
         initMessage(&mensagem, NULL, 0, NACK, sequencia);
     }
 
-    if (sendMessage(soquete, &mensagem) != 0)
+    if (!sendMessage(soquete, &mensagem))
     {
         perror("Erro ao enviar mensagem de retorno");
         return -1;
@@ -532,7 +532,6 @@ int sendMessage(int soquete, msgT *mensagem)
     }
     else
     {
-        // error sending message...
         return 1;
     }
 }
