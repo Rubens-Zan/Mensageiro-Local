@@ -187,17 +187,12 @@ void state_create_message(int soquete, tCliente *client)
             msgT mensagem;
 
             unsigned int sequenciaAtual = 1;
+            unsigned int sequenciaEsperada = 1;
+
 
             // totalCharsInBuffer = Amount of unsigned chars to send
             int remainingSize = totalCharsInBuffer;
 
-#ifdef DEBUG
-            printf("\n> MENSAGEM A SER ENVIADA: \n");
-            for (unsigned int i = 0; i < totalCharsInBuffer; ++i)
-                printf("%d ", buffer_c[i]);
-
-            printf("\n");
-#endif
 
             printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, (totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG) + 1);
             // 000001 = TEXTO
@@ -218,7 +213,7 @@ void state_create_message(int soquete, tCliente *client)
                 int ack = 0;
                 while (!ack)
                 {
-                    switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
+                    switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaEsperada))
                     {
                     case ACK:
                         ack = 1;
@@ -240,10 +235,16 @@ void state_create_message(int soquete, tCliente *client)
                 memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); // TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
                 // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual += 1;
+                if (sequenciaEsperada >= MAX_SEQ){
+                    sequenciaEsperada=1;
+                }else{
+                    ++sequenciaEsperada;
+                };
+
                 remainingSize -= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice
 
                 getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, UTF8CHARSIZE);
-                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaAtual);
+                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaEsperada);
 
                 if (sendMessage(client->socket, &mensagem))
                 {
@@ -266,7 +267,7 @@ void state_create_message(int soquete, tCliente *client)
             while (!ack)
             {
                 int contador = 0;
-                switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
+                switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaEsperada))
                 {
                 case ACK:
                     ack = 1;
@@ -278,8 +279,14 @@ void state_create_message(int soquete, tCliente *client)
                     return;
                 }
             }
+
+            if (sequenciaEsperada >= MAX_SEQ){
+                sequenciaEsperada=1;
+            }else{
+                ++sequenciaEsperada;
+            };
             // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
-            initMessage(&mensagem, NULL, 0, END, sequenciaAtual + 1);
+            initMessage(&mensagem, NULL, 0, END, sequenciaEsperada);
             if (sendMessage(client->socket, &mensagem))
                 printf("> MENSAGEM DE FIM ENVIADA!\n");
             else
@@ -299,7 +306,6 @@ void state_create_message(int soquete, tCliente *client)
         }
     }
 }
-
 int state_send_file(int soquete, tCliente *client)
 {
     // File opening

@@ -124,6 +124,8 @@ void recebeMensagemTexto(tServer *server)
 {
     msgT mensagemTxt;
     unsigned int sequencia_atual = 2;
+    unsigned int sequencia_esperada = 2;
+
     unsigned int fullMessageReceived[BUFFER_GIGANTE];
 
     printf("< Estou aguardando recebimento do texto \n");
@@ -139,7 +141,7 @@ void recebeMensagemTexto(tServer *server)
         mensagemTxt.tam_msg = 0;
         memset(mensagemTxt.dados,0,TAM_MAX_DADOS);
 
-        int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1, sequencia_atual);
+        int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1, sequencia_esperada);
         
         if (retorno_func == TIMEOUT_RETURN)
         {
@@ -169,6 +171,11 @@ void recebeMensagemTexto(tServer *server)
                 printf("\n");
 
                 mandaRetorno(1, server->socket, mensagemTxt.sequencia);
+                if (sequencia_esperada >= MAX_SEQ){
+                    sequencia_esperada = 1;
+                }else{
+                    ++sequencia_esperada;
+                }
                 ++sequencia_atual;
             }
             else
@@ -192,7 +199,6 @@ void recebeMensagemTexto(tServer *server)
         }
     }
 }
-
 void recebeMensagemArquivo(tServer *server)
 {
     printf("----> Receive media ACTIVATED <----\n"); // Function init
