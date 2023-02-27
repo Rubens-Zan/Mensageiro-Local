@@ -268,14 +268,15 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
  */
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode)
 {
-    if (originalMessage != NULL)
+    if (originalMessage != NULL && shouldEncode)
     {
         memset(mensagem->dados, 0, TAM_MAX_DADOS); 
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
         mensagem->tam_msg = size * 2; // duplica por causa da modulção da trelica
     }else if (!shouldEncode){
-        memcpy(mensagem->dados, originalMessage, size); 
+        mensagem->paridade = calculaParidade(mensagem->dados, size);
+        memcpy(mensagem->dados, originalMessage, size * sizeof(unsigned char)); 
         mensagem->tam_msg=size;
     }
 

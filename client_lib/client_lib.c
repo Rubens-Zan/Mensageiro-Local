@@ -594,17 +594,18 @@ void state_send_file_PARAESPERA(tCliente *client)
     // LEITURA E ENVIO DOS PACOTES
     msgT mensagem;
 
-    char buffer_arq[64];
+    unsigned char buffer_arq[64];
     int bytes_lidos = fread(buffer_arq, sizeof(char), 64 - 1, file);
     while (bytes_lidos != 0)
     {
-
         initMessage(&mensagem, buffer_arq, bytes_lidos, MIDIA, seqAtual,0);
         ack = 0;
         while (!ack)
         {
             if (!sendMessage(client->socket, &mensagem))
                 perror("Erro ao enviar mensagem no state_send_file_PARAESPERA");
+           
+           
             int contador = 0;
             switch (recebeRetorno(client->socket, &mensagem, &contador, seqAtual))
             {
@@ -638,7 +639,7 @@ void state_send_file_PARAESPERA(tCliente *client)
             break;
         case TIMEOUT:
             ack = 1;
-            printf("TIMEOUT AO RECEBER RETORNO DE FIM!!");
+            printf("TIMEOUT!!");
             client->estado = INICIO;
             return;
         }

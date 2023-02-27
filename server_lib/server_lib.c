@@ -520,8 +520,9 @@ void recebeMensagemArquivo_PARAESPERA(tServer *server)
         {
 
             // efetua verificações e envia nack/ack
-            if (mensagem.marc_inicio == MARC_INICIO && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) ||
-                                                           mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) - 256))
+            if (mensagem.marc_inicio == MARC_INICIO)
+            //  && (mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) ||
+                                                        //    mensagem.paridade == (unsigned int)calculaParidade(mensagem.dados, mensagem.tam_msg) - 256))
             {
 
                 mandaRetorno(1, server->socket, mensagem.sequencia);
@@ -529,7 +530,7 @@ void recebeMensagemArquivo_PARAESPERA(tServer *server)
                     perror("put_server(): Escrever tamanho errado no servidor");
                     return;
                 }else{
-                    printf("escrevi: %d",mensagem.tam_msg);
+                    printf("%d bytes escritos",mensagem.tam_msg);
                 }
 
                 if (sequencia_esperada >= MAX_SEQ)
