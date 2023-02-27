@@ -147,8 +147,15 @@ void state_init(tCliente *client)
         {
             printf("> SEND:");
             client->fileNameSize = getFileName(filename_c);
-            client->estado = ENVIA_ARQUIVO;
             memcpy(client->fileName, filename_c, client->fileNameSize * sizeof(unsigned int));
+            if (USE_PARAESPERA_ARQ)
+            {
+                client->estado = ENVIA_ARQUIVO_PARAESPRA;
+            }
+            else
+            {
+                client->estado = ENVIA_ARQUIVO;
+            }
             return;
         }
         else
@@ -189,14 +196,12 @@ void state_create_message(int soquete, tCliente *client)
             unsigned int sequenciaAtual = 1;
             unsigned int sequenciaEsperada = 1;
 
-
             // totalCharsInBuffer = Amount of unsigned chars to send
             int remainingSize = totalCharsInBuffer;
 
-
             printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, (totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG) + 1);
             // 000001 = TEXTO
-            initMessage(&mensagem, "000001", 6, INIT, 1);
+            initMessage(&mensagem, "000001", 6, INIT, 1,1);
 
             if (sendMessage(client->socket, &mensagem))
             {
@@ -235,16 +240,19 @@ void state_create_message(int soquete, tCliente *client)
                 memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); // TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
                 // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual += 1;
-                if (sequenciaEsperada >= MAX_SEQ){
-                    sequenciaEsperada=1;
-                }else{
+                if (sequenciaEsperada >= MAX_SEQ)
+                {
+                    sequenciaEsperada = 1;
+                }
+                else
+                {
                     ++sequenciaEsperada;
                 };
 
                 remainingSize -= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice
 
                 getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, UTF8CHARSIZE);
-                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaEsperada);
+                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaEsperada, 1);
 
                 if (sendMessage(client->socket, &mensagem))
                 {
@@ -280,13 +288,16 @@ void state_create_message(int soquete, tCliente *client)
                 }
             }
 
-            if (sequenciaEsperada >= MAX_SEQ){
-                sequenciaEsperada=1;
-            }else{
+            if (sequenciaEsperada >= MAX_SEQ)
+            {
+                sequenciaEsperada = 1;
+            }
+            else
+            {
                 ++sequenciaEsperada;
             };
             // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
-            initMessage(&mensagem, NULL, 0, END, sequenciaEsperada);
+            initMessage(&mensagem, NULL, 0, END, sequenciaEsperada, 0);
             if (sendMessage(client->socket, &mensagem))
                 printf("> MENSAGEM DE FIM ENVIADA!\n");
             else
@@ -326,7 +337,7 @@ int state_send_file(int soquete, tCliente *client)
     int seqAtual = 1;
     // Send message of Initialization
     msgT ini_message;
-    initMessage(&ini_message, "010000", 6, INIT, seqAtual); // envia a mensagem inicial
+    initMessage(&ini_message, "010000", 6, INIT, seqAtual, 1); // envia a mensagem inicial
     int ack = 0;
     // INICIALIZAÇÃO, DEVO RECEBER DOIS ACK, UM PARA O INICIO DA TRANSMISSÃO E UM PARA O NOME DO ARQUIVO
     while (ack != 2)
@@ -340,7 +351,7 @@ int state_send_file(int soquete, tCliente *client)
             // RECEBI ACK DA INICIALIZAÇÃO DA TRANSMISSÃO, ENTÃO VOU ENVIAR A MENSAGEM COM NOME DO ARQUIVO
             bit mensagemEmBits[TAM_MAX_DADOS];
             getStringAsBinary(mensagemEmBits, client->fileName, client->fileNameSize, UTF8CHARSIZE);
-            initMessage(&ini_message, mensagemEmBits, client->fileNameSize * UTF8CHARSIZE, TEXTO, seqAtual);
+            initMessage(&ini_message, mensagemEmBits, client->fileNameSize * UTF8CHARSIZE, TEXTO, seqAtual, 1);
             if (sendMessage(client->socket, &ini_message))
                 printf("> MENSAGEM DE NOME DO ARQUIVO ENVIADA!\n");
             else
@@ -361,7 +372,7 @@ int state_send_file(int soquete, tCliente *client)
     fds.fd = soquete;
 
     seqAtual = 0;
-    int window_size = 16;                    // Size of Sliding Window
+    int window_size = 16;                   // Size of Sliding Window
     int original_window_size = window_size; // Aux variable
     Packet window[window_size];             // Window array to hold the packets
     int seq_num = -1;                       // Initial sequence number
@@ -369,7 +380,7 @@ int state_send_file(int soquete, tCliente *client)
     int bytes_read = 1;                     // Variable to Hold number of bytes read
     Packet packet;                          // Packet that hold data and sequence number
 
-    while ( !feof(file) )
+    while (!feof(file))
     {
         window_size = original_window_size;
 
@@ -410,7 +421,7 @@ int state_send_file(int soquete, tCliente *client)
             fds.events = POLLIN;
 
             msgT ack_message;
-            initMessage(&ack_message, "00000", 6, NACK, seq_num);
+            initMessage(&ack_message, "00000", 6, NACK, seq_num,1);
             retorno_poll = poll(&fds, 1, TIMEOUT);
 
             if (retorno_poll == 0)
@@ -486,7 +497,7 @@ int state_send_file(int soquete, tCliente *client)
 
     // Envia mensagem do tipo FIM
     msgT *end_message;
-    initMessage(end_message, NULL, 6, END, seq_num);
+    initMessage(end_message, NULL, 6, END, seq_num,1);
     if (!sendMessage(soquete, end_message))
     {
         perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
@@ -530,6 +541,121 @@ int state_send_file(int soquete, tCliente *client)
     }
 }
 
+void state_send_file_PARAESPERA(tCliente *client)
+{
+    // File opening
+    char nomeDoArquivo[80];
+
+    for (unsigned int i = 0; i < client->fileNameSize; ++i)
+    {
+        nomeDoArquivo[i] = (char)client->fileName[i];
+    }
+
+    FILE *file = openFile(nomeDoArquivo, "rb");
+    if (file == NULL)
+    {
+        printf("File not opened, try again, %s \n", nomeDoArquivo);
+        exit(1);
+    }
+    printf("\n=> FILE to be sent: %s\n", nomeDoArquivo);
+    int seqAtual = 1;
+    // Send message of Initialization
+    msgT ini_message;
+    initMessage(&ini_message, "010000", 6, INIT, seqAtual,1); // envia a mensagem inicial
+    int ack = 0;
+    // INICIALIZAÇÃO, DEVO RECEBER DOIS ACK, UM PARA O INICIO DA TRANSMISSÃO E UM PARA O NOME DO ARQUIVO
+    while (ack != 2)
+    {
+        int contador = 0;
+        switch (recebeRetorno(client->socket, &ini_message, &contador, seqAtual))
+        {
+        case ACK:
+            ++ack;
+            ++seqAtual; // seqatual = 2
+            // RECEBI ACK DA INICIALIZAÇÃO DA TRANSMISSÃO, ENTÃO VOU ENVIAR A MENSAGEM COM NOME DO ARQUIVO
+            bit mensagemEmBits[TAM_MAX_DADOS];
+            getStringAsBinary(mensagemEmBits, client->fileName, client->fileNameSize, UTF8CHARSIZE);
+            initMessage(&ini_message, mensagemEmBits, client->fileNameSize * UTF8CHARSIZE, TEXTO, seqAtual,1);
+            if (sendMessage(client->socket, &ini_message))
+                printf("> MENSAGEM DE NOME DO ARQUIVO ENVIADA!\n");
+            else
+            {
+                printf("> MENSAGEM DE NOME DO ARQUIVO NAO ENVIADA! \n");
+            }
+            break;
+        case TIMEOUT:
+            ack = 1;
+            printf("TIMEOUT!!");
+            client->estado = INICIO;
+            return;
+        }
+    }
+
+    // LEITURA E ENVIO DOS PACOTES
+    msgT mensagem;
+
+    char buffer_arq[64];
+    int bytes_lidos = fread(buffer_arq, sizeof(char), 64 - 1, file);
+    while (bytes_lidos != 0)
+    {
+
+        initMessage(&mensagem, buffer_arq, bytes_lidos, MIDIA, seqAtual,0);
+        ack = 0;
+        while (!ack)
+        {
+            if (!sendMessage(client->socket, &mensagem))
+                perror("Erro ao enviar mensagem no state_send_file_PARAESPERA");
+            int contador = 0;
+            switch (recebeRetorno(client->socket, &mensagem, &contador, seqAtual))
+            {
+
+            // se for ack, quebra o laço interno e vai pro laço externo pegar mais dados
+            case ACK:
+                ack = 1;
+                break;
+            }
+        }
+        memset(buffer_arq, 0, 64);
+        bytes_lidos = fread(buffer_arq, sizeof(char), 64 - 1, file);
+        if (seqAtual >= MAX_SEQ)
+        {
+            seqAtual = 1;
+        }
+        else
+        {
+            ++seqAtual;
+        }
+    }
+
+    ack = 0;
+    while (!ack)
+    {
+        int contador = 0;
+        switch (recebeRetorno(client->socket, &mensagem, &contador, seqAtual-1))
+        {
+        case ACK:
+            ack = 1;
+            break;
+        case TIMEOUT:
+            ack = 1;
+            printf("TIMEOUT AO RECEBER RETORNO DE FIM!!");
+            client->estado = INICIO;
+            return;
+        }
+    }
+
+    // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
+    initMessage(&mensagem, NULL, 0, END, seqAtual, 0);
+    if (sendMessage(client->socket, &mensagem))
+        printf("> MENSAGEM DE FIM ENVIADA!\n");
+    else
+    {
+        printf("> MENSAGEM DE FIM NAO ENVIADA! \n");
+    }
+
+    client->estado = INICIO; // apos o envio das mensagens volta para o estado inicial
+    return;
+}
 void state_end(tCliente *client)
 {
     while (1)

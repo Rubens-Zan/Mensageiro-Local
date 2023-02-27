@@ -29,6 +29,7 @@
 #define PACKET_SIZE 2
 #define UTF8CHARSIZE 8
 #define MAX_SEQ (16-1)
+#define USE_PARAESPERA_ARQ 1
 // #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
 
 // #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(10) // PARA MOSTRAR SEM ERROS
@@ -145,7 +146,7 @@ void getFullMessageDecoded(tNode *leaf);
 
 bit calculaParidade(bit *conteudo, unsigned int tam);
 void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size);
-void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia);
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode);
 
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
 

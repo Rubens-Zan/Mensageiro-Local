@@ -14,11 +14,11 @@ int mandaRetorno(int isAck, int soquete, int sequencia)
 
     if (isAck)
     {
-        initMessage(&mensagem, NULL, 0, ACK, sequencia);
+        initMessage(&mensagem, NULL, 0, ACK, sequencia, 0);
     }
     else
     {
-        initMessage(&mensagem, NULL, 0, NACK, sequencia);
+        initMessage(&mensagem, NULL, 0, NACK, sequencia, 0);
     }
 
     if (!sendMessage(soquete, &mensagem))
@@ -266,18 +266,21 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
  * @param msgType - Tipo da mensagem
  * @param sequencia - Sequencia atual da mensagem
  */
-void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode)
 {
     if (originalMessage != NULL)
     {
         memset(mensagem->dados, 0, TAM_MAX_DADOS); 
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
+        mensagem->tam_msg = size * 2; // duplica por causa da modulção da trelica
+    }else if (!shouldEncode){
+        memcpy(mensagem->dados, originalMessage, size); 
+        mensagem->tam_msg=size;
     }
 
     mensagem->marc_inicio = MARC_INICIO;
     mensagem->tipo = msgType;
-    mensagem->tam_msg = size * 2; // duplica por causa da modulção da trelica
     mensagem->sequencia = sequencia;
 }
 

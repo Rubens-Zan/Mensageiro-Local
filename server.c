@@ -30,6 +30,9 @@ int main()
         case RECEBE_ARQUIVO:
             recebeMensagemArquivo(server);
             break;
+        case RECEBE_ARQUIVO_PARAESPERA:
+            recebeMensagemArquivo_PARAESPERA(server);
+            break;
         case RECEBE_TEXTO:
             recebeMensagemTexto(server);
             break;

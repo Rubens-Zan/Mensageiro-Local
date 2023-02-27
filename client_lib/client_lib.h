@@ -18,7 +18,8 @@ typedef enum tState
     ENVIA_TEXTO,
     ENVIA_MENSAGEM,
     ENVIA_ARQUIVO,
-    FIM_PROGRAMA
+    FIM_PROGRAMA,
+    ENVIA_ARQUIVO_PARAESPRA
 } tClientState;
 
 typedef struct tCliente
@@ -35,6 +36,7 @@ void state_init(tCliente *client);
 void state_create_message(int soquete, tCliente *client);
 int  state_send_file(int soquete, tCliente *client);
 void state_end(tCliente *client);
+void state_send_file_PARAESPERA(tCliente *client);
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAtual);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
 void incrementaSequencia();

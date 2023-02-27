@@ -10,7 +10,8 @@ typedef enum tServerState
     INICIO_RECEBIMENTO,
     RECEBE_TEXTO,
     RECEBE_ARQUIVO,
-    FIM_PGMA
+    FIM_PGMA,
+    RECEBE_ARQUIVO_PARAESPERA
 } tServerState;
 
 
@@ -43,4 +44,7 @@ void recebeMensagemTexto(tServer *server);
  * @param server - Holds all the content to be received
  */
 void recebeMensagemArquivo(tServer *server);
+
+void recebeMensagemArquivo_PARAESPERA(tServer *server); 
+
 #endif

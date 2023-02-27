@@ -25,6 +25,10 @@ int main()
             // file = fopen(client->fileName, "rb");
             state_send_file(soquete, client);
             break;
+        case ENVIA_ARQUIVO_PARAESPRA:
+            // file = fopen(client->fileName, "rb");
+            state_send_file_PARAESPERA(client);
+            break;
         case FIM_PROGRAMA:
             // state_end(client);
             return 1;
