@@ -353,6 +353,7 @@ int state_send_file(int soquete, tCliente *client)
     int retorno_poll;
     fds.fd = soquete;
 
+    seqAtual = 0;
     int window_size = 3; // Size of Sliding Window
     int original_window_size = window_size; // Aux variable
     Packet window[window_size]; // Window array to hold the packets
@@ -425,7 +426,13 @@ int state_send_file(int soquete, tCliente *client)
                 printf("=> Received ACK %d\n", ack_message.sequencia);
                 for (int i = 0; i < window_size; ++i)
                 {
-                    if (window[i].seq_num == ack_message.sequencia)
+                    if (ack_message.sequencia == (window_size - 1))
+                    {
+                            window_size = 0;
+                            printf("=> Window size is %d, reset\n", window_size);
+                            break;
+                    }
+                    else if (window[i].seq_num < ack_message.sequencia)
                     {
                         // Remove the element in the i position of the window
                         int j;
@@ -435,6 +442,17 @@ int state_send_file(int soquete, tCliente *client)
                         }
                         window_size--; // adjust the size of the window, to exclude last element
                     }
+                    else if (window[i].seq_num == ack_message.sequencia)
+                    {
+                        // Remove the element in the i position of the window
+                        int j;
+                        for (int j = i; i < window_size - 1; i++)
+                        {
+                            window[j] = window[j + 1];
+                        }
+                        window_size--; // adjust the size of the window, to exclude last element
+                    }
+                    printf("=> Window size is %d", window_size);
                 }
             }
         }
@@ -468,7 +486,8 @@ int state_send_file(int soquete, tCliente *client)
     {
         perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
     }
-    while (1) // Receive ACK for end Message
+    int retry = 0;
+    while (retry < MAX_TENTATIVAS) // Receive ACK for end Message
     {
         fds.events = POLLIN;
         retorno_poll = poll(&fds, 1, TIMEOUT);
@@ -487,16 +506,23 @@ int state_send_file(int soquete, tCliente *client)
         }
         if (end_message->tipo == NACK)
         {
-            printf("> Received NACK %d, resending end of transmission: %d", end_message->sequencia);
+            printf("> Received NACK %d, resending end of transmission: %d\n", end_message->sequencia);
             if (!sendMessage(soquete, end_message))
             {
                 perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
             }
+            retry++;
         }
         else if (end_message->tipo == ACK)
         {
             return 0; // File sent
         }
+        
+    }
+    if (retry)
+    {
+        printf("=> Did not receive End of Transmission\n");
+        return 1;
     }
 }
 
