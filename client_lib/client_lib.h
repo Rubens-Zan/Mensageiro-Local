@@ -3,6 +3,7 @@
 
 #include "../general/general.h"
 #include "../server_lib/server_lib.h"
+#include <time.h>
 
 // #define ENTER 13
 #define ENTER 10
@@ -31,7 +32,7 @@ typedef struct tCliente
 
 void state_init(tCliente *client);
 void state_create_message(int soquete, tCliente *client);
-int state_send_file(int soquete, tCliente *client);
+int  state_send_file(int soquete, tCliente *client);
 void state_end(tCliente *client);
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAtual);
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam);
