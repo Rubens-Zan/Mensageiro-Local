@@ -1,5 +1,9 @@
 #include "./client_lib.h"
 
+/**
+ * @brief Get the Next Pressed Unsigned Char object 
+ * @return unsigned int 
+ */
 unsigned int getNextPressedChar()
 {
 
@@ -45,6 +49,13 @@ void getFileName(char *filename_c)
     tcsetattr(STDIN_FILENO, TCSANOW, &original_attributes);
 }
 
+/**
+ * @brief Função para conversão de um número em binário,
+ * já faz o append no início no número em binário conforme o bitsSize esperado
+ * @param num - Numero a ser convertido
+ * @param bitsSize - Quantidade de bits esperados no binario, para append no caracteres para UTF-8 
+ * @return bit* 
+ */
 bit *convertToBin(unsigned int num, unsigned int bitsSize)
 {
     bit *convertedNumb = (bit *)malloc((bitsSize + 1) * sizeof(bit));
@@ -69,6 +80,14 @@ bit *convertToBin(unsigned int num, unsigned int bitsSize)
     return convertedNumb;
 }
 
+/**
+ * @brief Get the String As Binary convertind the raw UF-8 message to binary
+ * 
+ * @param messageS - Array de bits que recebe a string uf8 em binario conforme conversão
+ * @param s  - Array contendo os caracteres em utf-8
+ * @param tam - Tamanho do array de caracteres
+ * @param binaryTam - Tamanho esperado dos tamanhos em binário
+ */
 void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigned int binaryTam)
 {
     // A small 9 characters buffer we use to perform the conversion
@@ -86,11 +105,18 @@ void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigne
 }
 
 /* ESTADOS DO CLIENTE*/
+
+/**
+ * @brief -Função do estado inicial do cliente, redireciona o estado do cliente conforme input
+ * Funciona como o vim, sendo que sempre é lido o próximo caracter para verificação do próximo estado do cliente
+ *  i: Inicia a criação de uma mensagem. Enter para enviar.
+ *  s: Envia arquivo x.
+ *  q: Sai do programa.
+ * @param client 
+ */
 void state_init(tCliente *client)
 {
-    // i: Inicia a criação de uma mensagem. Enter para enviar.
-    // s: Envia arquivo x.
-    // q: Sai do programa.
+
     char buffer_c[100];
     char filename_c[50];
     char char_code;
@@ -131,6 +157,14 @@ void state_init(tCliente *client)
     }
 }
 
+/**
+ * @brief - Função para criação/envio da mensagem
+ * Cria a mensagem recebendo o proximo caracter em UTF-8
+ * ENTER: envia a mensagem  
+ * ESC: faz com que o estado do cliente volte ao estado inicial 
+ * @param soquete 
+ * @param client 
+ */
 void state_create_message(int soquete, tCliente *client)
 {
     unsigned int char_code;
@@ -138,7 +172,6 @@ void state_create_message(int soquete, tCliente *client)
     unsigned int totalCharsInBuffer = 0;
     
     // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR) 
-    // USES 2 AS PACKET SIZE BECAUSE OF THE MDULATION CHOOSEN FOR THE TRELLICE CODE
     while (1)
     {
         char_code = getNextPressedChar();
@@ -206,8 +239,8 @@ void state_create_message(int soquete, tCliente *client)
                 sequenciaAtual+=1;
                 remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
 
-                getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, 8);
-                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * 8, TEXTO, sequenciaAtual);
+                getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, UTF8CHARSIZE);
+                initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaAtual);
 
                 if (sendMessage(client->socket, &mensagem)){
                     time_t t;
@@ -273,66 +306,43 @@ int state_send_file(int soquete, tCliente *client)
        exit(1);
     }
     printf("\n=> FILE to be sent: %s\n", client->fileName);
-
+    int seqAtual = 1;
     // Send message of Initialization
     msgT ini_message;
-    initMessage(&ini_message, "010000", 6, INIT, 1);
-    int send_ret = sendMessage(soquete, &ini_message);
-    if (send_ret == 1)
-    {
-        printf("=> Initialization message sent successfully, proceeding with sending file.\n");
-    }
-    else
-    {
-        printf("> Initialization message failed to be send\n");
-    }
-    // Receive ACK for Initialization
-    while (1)
-    {
-        struct pollfd fds; // cuida do timeout
-        fds.fd = soquete;
-        fds.events = POLLIN;
-        int retorno_poll = poll(&fds, 1, TIMEOUT);
-
-        if (TIMEOUT) // Timeout error
+    initMessage(&ini_message, "010000", 6, INIT, seqAtual); // envia a mensagem inicial 
+    int ack = 0;
+    // INICIALIZAÇÃO, DEVO RECEBER DOIS ACK, UM PARA O INICIO DA TRANSMISSÃO E UM PARA O NOME DO ARQUIVO    
+    while (ack != 2){
+        int contador = 0;
+        switch (recebeRetorno(client->socket, &ini_message, &contador, seqAtual))
         {
-            if (retorno_poll == 0)
-                return TIMEOUT_RETURN;
-            else if (retorno_poll < 0)
-                return 1;
-        }
-
-        if (recv(soquete, &ini_message, sizeof(msgT), 0) < 0) // Error on recv
-        {
-            return 1;
-        }
-        if (ini_message.tipo == NACK)
-        {
-            printf("> Received NACK %d, resending init of transmission: %d\n", ini_message.sequencia);
-            if (!sendMessage(soquete, &ini_message))
-            {
-                perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
-            }
-        }
-        else if (ini_message.tipo == ACK)
-        {
-            printf("=> ACK receive for initialization\n");
-            break;
+            case ACK:
+                ++ack;
+                ++seqAtual; // seqatual = 2
+                // RECEBI ACK DA INICIALIZAÇÃO DA TRANSMISSÃO, ENTÃO VOU ENVIAR A MENSAGEM COM NOME DO ARQUIVO
+                bit mensagemEmBits[TAM_MAX_DADOS];
+                getStringAsBinary(mensagemEmBits, client->fileName, strlen(client->fileName), UTF8CHARSIZE);
+                initMessage(&ini_message, mensagemEmBits, strlen(client->fileName) * UTF8CHARSIZE, TEXTO, seqAtual);
+                break;
+            case TIMEOUT:
+                ack = 1;
+                printf("TIMEOUT!!");
+                client->estado = INICIO;
+                return; 
         }
     }
 
-    // SENT FILENAME
-    // bit buffer[1024];
-    // // Copiar a string para o buffer
-    // memcpy(buffer, client->fileName, strlen(client->fileName));
-    // int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
-    // // Sent filename
-    // if (bytes_sent < 0)
-    // {
-    //     perror("> Dentro do send filename, Erro ao enviar mensagem");
-    //     exit(1);
-    // }
-    // printf("=> Filename sent successfully.\n");
+    char buffer[1024];
+    // Copiar a string para o buffer
+    memcpy(buffer, client->fileName, strlen(client->fileName));
+    int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
+    // Sent filename
+    if (bytes_sent < 0)
+    {
+        perror("> Dentro do send filename, Erro ao enviar mensagem");
+        exit(1);
+    }
+    printf("=> Filename sent successfully.\n");
 
     int window_size = 3; // Size of Sliding Window
     int original_window_size = window_size;
@@ -355,7 +365,6 @@ int state_send_file(int soquete, tCliente *client)
             printf("\n--> Packet - %d, Sequence Number: %d, Number of bytes Read: %d,  Data: %s\n", i, seq_num, bytes_read, window[i].data); // Print of variables
         }
 
-        
         for (int i = 0; i < window_size; i++) // Send packet in the window
         {
             int sent = send(soquete, &window[i], sizeof(packet), 0);
@@ -441,12 +450,11 @@ int state_send_file(int soquete, tCliente *client)
         }
 
         memset(packet.data, 0, chunk_size); // Reset buffer with 0;
-
     }
 
     // Envia mensagem do tipo FIM
     msgT *end_message;
-    initMessage(end_message, NULL, 6, END, seq_num);
+    initMessage(end_message, NULL, 0, END, seq_num);
     if (!sendMessage(soquete, end_message))
     {
         perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
@@ -494,6 +502,17 @@ void state_end(tCliente *client)
     }
 }
 
+/**
+ * @brief - Função para recebimento de ACKS/NACKS usando técnica Para-Espera
+ * Faz a retransmissão da mensagem em caso de timeout
+ * Caso o número de tentativas de retransmissão/recebimento de ack seja excedido,
+ * Conforme o retorno de TIMEOUT a função que chamou lida, podendo desistir de mandar a mensagem e retornar o cliente ao estado inicial
+ * @param soquete - Socket do cliente
+ * @param mensagem - Mensagem enviada, para caso seja neccessario efetuar o reenvio da mensagem
+ * @param contador - Ponteiro para o contador de erros(NACK ou TIMEOUT), inicializar com 1 
+ * @param seqAtual - Sequencia atual da mensagem na transmissão
+ * @return typesMessage 
+ */
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAtual)
 {
     msgT mensagem_aux;

@@ -1,5 +1,11 @@
 #include "./server_lib.h"
 
+/**
+ * @brief - Função para a conversão de um número em binário em decimal 
+ * @param binary - String de bits para conversão 
+ * @param tam  - Tamanho da string
+ * @return int 
+ */
 int binaryToDecimal(unsigned char *binary, unsigned int tam)
 {
     int decimal = 0, i = 0;
@@ -14,24 +20,34 @@ int binaryToDecimal(unsigned char *binary, unsigned int tam)
     return decimal;
 }
 
+/**
+ * @brief - Função que converte o binário da mensagem recebida em unsigned char
+ * 
+ * @param msg - Binário da mensagem sequencia recebido
+ * @param size - Tamanho da mensagem nessa sequencia recebido
+ * @param sequenciaAtual - Sequência atual da mensagem, para saber a quantidade de bits já recebidos
+ * @param fullMessage - Array que recebe toda a mensagem das transmissões
+ */
 void printOriginalMessage(bit *msg, unsigned int size, unsigned int sequenciaAtual, unsigned int *fullMessage)
 {
     wint_t originalMessage[BUFFER_GIGANTE];
     int counter = 0;
     setlocale(LC_ALL, "");
 
-    for (unsigned int i = 0; i < size; i += 8)
+    for (unsigned int i = 0; i < size; i += UTF8CHARSIZE)
     {
-        unsigned char curIntConverted[8 + 1];
-        memcpy(curIntConverted, msg + i, 8 * sizeof(unsigned char));
-        originalMessage[counter] = (wchar_t)binaryToDecimal(curIntConverted, 8);
+        unsigned char curIntConverted[UTF8CHARSIZE + 1];
+        memcpy(curIntConverted, msg + i, UTF8CHARSIZE * sizeof(unsigned char));
+        originalMessage[counter] = (wchar_t)binaryToDecimal(curIntConverted, UTF8CHARSIZE);
         counter+=1;
         
     }
     unsigned int receivedChars = (sequenciaAtual - 2) * AVAILABLE_UNS_CHARS_PER_MSG;
-    memcpy(fullMessage +receivedChars, originalMessage,(size/8 )* sizeof(unsigned int) );
+    memcpy(fullMessage +receivedChars, originalMessage,(size/UTF8CHARSIZE )* sizeof(unsigned int) );
     printf("Mensagem recebida: %ls sequência: %d", originalMessage, sequenciaAtual);
 }
+
+
 /**
  * @brief Função para receber a primeira mensagem no servidor em loop
  * @param soquete
@@ -137,7 +153,8 @@ void recebeMensagemTexto(tServer *server)
             ++qtErros;
             continue;
         }
-
+        
+        qtErros=0; // quantidade de erros volta para 0, pois consegui receber
         if (mensagemTxt.tipo == TEXTO)
         {
 
@@ -147,8 +164,8 @@ void recebeMensagemTexto(tServer *server)
                 mensagemTxt.paridade == (unsigned int)calculaParidade(mensagemTxt.dados, mensagemTxt.tam_msg) - 256 )
             )
             {
-                bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, 2, mensagemTxt.tam_msg);
-                printOriginalMessage(decodedMessage, mensagemTxt.tam_msg/2, sequencia_atual, fullMessageReceived);
+                bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, PACKET_SIZE, mensagemTxt.tam_msg);
+                printOriginalMessage(decodedMessage, mensagemTxt.tam_msg / PACKET_SIZE, sequencia_atual, fullMessageReceived);
                 printf("\n");
 
                 mandaRetorno(1, server->socket, mensagemTxt.sequencia);
@@ -179,19 +196,42 @@ void recebeMensagemTexto(tServer *server)
 void recebeMensagemArquivo(tServer *server)
 {
     printf("----> On receive media\n");
+    int fileNameReceived = 0;
+    msgT mensagemInit;
+    mensagemInit.sequencia = -1;
+    unsigned int filename[50]
+    unsigned int tentativasReceberNome = 0;
 
-    // RECEIVE FILENAME
-    // char buffer[1024];
-    // int bytes_lidos = recv(server->socket, buffer, sizeof(buffer), 0);
-    // if (bytes_lidos < 0)
-    // {
-    //     perror("Erro ao receber a mensagem");
-    //     exit(1);
-    // }
-    // // Adiciona um caractere nulo ao final do buffer para transformá-lo em uma string
-    // buffer[bytes_lidos] = '\0';
-    // printf("=> Filename received: %s\n", buffer);
+    while (!fileNameReceived)
+    {
+        int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 1, 2);
+        
+        if (qtErros > MAX_TENTATIVAS){
+            printf("MUITOS ERROS NAS TENTATIVAS, ESTOU RETORNANDO AO INICIO");
+            server->estado = INICIO_RECEBIMENTO;
+        }
 
+        if (retorno_func == TIMEOUT_RETURN)
+        {
+            printf("Timeout ao receber mensagem\n");
+            ++tentativasReceberNome;
+            continue;
+        }
+        else if (retorno_func == 0)
+        {
+            ++tentativasReceberNome;
+            printf("Erro ao receber mensagem no loop\n");
+            continue;
+        }
+        
+        bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, PACKET_SIZE, mensagemTxt.tam_msg);
+        printOriginalMessage(decodedMessage, mensagemTxt.tam_msg / PACKET_SIZE, 0, filename);
+        printf("\n");
+        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagemInit.dados, PACKET_SIZE, mensagemInit.tam_msg), mensagemInit.tam_msg / PACKET_SIZE);
+
+        fileNameReceived = 1;
+    }
+  
     // Open the file for writing
     char *buffer = "./received.txt";
     FILE *file = fopen(buffer, "wb");

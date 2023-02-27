@@ -1,5 +1,13 @@
 #include "./general.h"
 
+/**
+ * @brief Função para que seja efetuado o retorno de ACK/NACK da mensagem recebida
+ * 
+ * @param isAck - Se eh um ack (1 ou 0)
+ * @param soquete - Socket
+ * @param sequencia - Sequencia atual para mandar o ack ou nack
+ * @return int 
+ */
 int mandaRetorno(int isAck, int soquete, int sequencia)
 {
     msgT mensagem;
@@ -249,6 +257,15 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
     return aux;
 }
 
+/**
+ * @brief Função para inicialização da mensagem
+ * 
+ * @param mensagem - Mensagem que recebe a inicialização
+ * @param originalMessage - Mensagem original em binário, que vai efetuar o encode pela treliça
+ * @param size - Tamanho da mensagem original
+ * @param msgType - Tipo da mensagem
+ * @param sequencia - Sequencia atual da mensagem
+ */
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia)
 {
     if (originalMessage != NULL)
@@ -525,6 +542,13 @@ unsigned int height(tNode *p)
 
 /**********************UTILS*****************************************************************************************************/
 
+/**
+ * @brief Função para envio da mensagem, em caso de erro no envio retorna 0
+ * 
+ * @param soquete 
+ * @param mensagem 
+ * @return int 
+ */
 int sendMessage(int soquete, msgT *mensagem)
 {
     if (send(soquete, mensagem, sizeof(msgT), 0) < 0)
@@ -596,7 +620,8 @@ void incrementaSequencia()
  * @param soquete 
  * @param mensagem - mensagem que vai receber a mensagem
  * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
- * @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
+ * @param sequencia_atual - Sequencia atual esperada pela função
+ *  @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
  */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
