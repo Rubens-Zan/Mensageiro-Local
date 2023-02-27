@@ -633,7 +633,7 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
 }
 
 
-FILE *openFIle(char *filename, char *mode)
+FILE *openFile(char *filename, char *mode)
 {
     FILE *fp = fopen(filename, mode);
     if (fp == NULL)

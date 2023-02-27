@@ -96,7 +96,7 @@ struct tListNode
 };
 
 typedef struct packet {
-    int seq_num;
+    unsigned int seq_num;
     bit data[TAM_MAX_DADOS];
 } Packet;
 
@@ -173,6 +173,6 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
  * @param mode -> Mode of opening the file
  * @return FILE Object
  **/
-FILE *openFIle(char *filename, char *mode); 
+FILE *openFile(char *filename, char *mode); 
 
 #endif
