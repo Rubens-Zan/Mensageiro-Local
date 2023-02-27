@@ -14,7 +14,7 @@ int binaryToDecimal(unsigned char *binary, unsigned int tam)
     return decimal;
 }
 
-void printOriginalMessage(bit *msg, unsigned int size)
+void printOriginalMessage(bit *msg, unsigned int size, unsigned int sequenciaAtual, unsigned int *fullMessage)
 {
     wint_t originalMessage[BUFFER_GIGANTE];
     int counter = 0;
@@ -28,7 +28,9 @@ void printOriginalMessage(bit *msg, unsigned int size)
         counter+=1;
         
     }
-    printf("Mensagem recebida: %ls", originalMessage);
+    unsigned int receivedChars = (sequenciaAtual - 2) * AVAILABLE_UNS_CHARS_PER_MSG;
+    memcpy(fullMessage +receivedChars, originalMessage,(size/8 )* sizeof(unsigned int) );
+    printf("Mensagem recebida: %ls sequência: %d", originalMessage, sequenciaAtual);
 }
 
 /**
@@ -78,7 +80,6 @@ void recebeMensagemServerLoop(tServer *server)
                 }
                 server->estado = RECEBE_TEXTO;
 
-                // printf("VALOR AQUI: %d ", valor);
                 mandaRetorno(1, server->socket, 1);
 
                 return;
@@ -106,6 +107,7 @@ void recebeMensagemTexto(tServer *server)
 {
     msgT mensagemTxt;
     unsigned int sequencia_atual = 2;
+    unsigned int fullMessageReceived[BUFFER_GIGANTE];
 
     printf("< Estou aguardando recebimento do texto \n");
     unsigned int qtErros = 0;
@@ -121,8 +123,7 @@ void recebeMensagemTexto(tServer *server)
         memset(mensagemTxt.dados,0,TAM_MAX_DADOS);
 
         int retorno_func = recebe_mensagem(server->socket, &mensagemTxt, 1, sequencia_atual);
-
-        printf("%d  ",retorno_func);
+        
         if (retorno_func == TIMEOUT_RETURN)
         {
             printf("Timeout ao receber mensagem\n");
@@ -146,7 +147,7 @@ void recebeMensagemTexto(tServer *server)
             )
             {
                 bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, 2, mensagemTxt.tam_msg);
-                printOriginalMessage(decodedMessage, mensagemTxt.tam_msg/2);
+                printOriginalMessage(decodedMessage, mensagemTxt.tam_msg/2, sequencia_atual, fullMessageReceived);
                 printf("\n");
 
                 mandaRetorno(1, server->socket, mensagemTxt.sequencia);
@@ -161,7 +162,7 @@ void recebeMensagemTexto(tServer *server)
         else if (mensagemTxt.tipo == END)
         {
             printf("<Recebi a mensagem de fim de transmissão de texto \n");
-
+            printf("<Toda a mensagem recebida: '%ls' \n", fullMessageReceived); 
             mandaRetorno(1, server->socket, mensagemTxt.sequencia);
             server->estado = INICIO_RECEBIMENTO;
             return;

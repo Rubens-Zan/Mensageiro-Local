@@ -1,11 +1,6 @@
 #include "./client_lib.h"
 #include <time.h>
 
-#define PACKET_SIZE 2
-// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
-
-// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(10) // PARA MOSTRAR SEM ERROS 
-#define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(16) // PARA MOSTRAR OS REENVIOS DE MENSAGEM NA MENSAGEM DE TEXTO 
 
 unsigned int getNextPressedChar()
 {
@@ -178,7 +173,7 @@ void state_create_message(int soquete, tCliente *client)
 
 
             if (sendMessage(client->socket, &mensagem)){
-                printf("> MENSAGEM DE INICIO ENVIADA! %d %d %s\n", mensagem.tipo, mensagem.sequencia, mensagem.dados);
+                printf("> MENSAGEM DE INICIO ENVIADA! \n");
 
             }else {
                 printf("> MENSAGEM DE INICIO NAO ENVIADA!\n");
@@ -208,7 +203,7 @@ void state_create_message(int soquete, tCliente *client)
                 unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
                 bit mensagemEmBits[TAM_MAX_DADOS];
                 memset(mensagemEmBits,0, TAM_MAX_DADOS);
-                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
                 // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual+=1;
                 remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
@@ -220,7 +215,11 @@ void state_create_message(int soquete, tCliente *client)
                     time_t t;
                     time(&t);
 
-                    printf("%s Mensagem: '%ls' sequência: %d enviada!", ctime(&t),auxString, mensagem.sequencia);
+                    printf("%s Mensagem: ", ctime(&t) );
+                    for (unsigned int k=0;k < uCharsInMessage;++k)
+                        printf("%lc",auxString[k]);
+
+                    printf(" sequência: %d enviada! \n", mensagem.sequencia);
                 }
                 else
                 {
@@ -457,6 +456,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                 // Se o contador de timeout ja foi no maximo de tentativas, retorna timeout
                 if (*contador >= MAX_TENTATIVAS)
                 {
+                    printf("RECEBI TIMEOUT");
                     return TIMEOUT;
                 }
 
