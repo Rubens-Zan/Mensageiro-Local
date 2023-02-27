@@ -1,43 +1,6 @@
 #include "./general.h"
 
-/**
- * @brief Função para que seja efetuado o retorno de ACK/NACK da mensagem recebida
- * 
- * @param isAck - Se eh um ack (1 ou 0)
- * @param soquete - Socket
- * @param sequencia - Sequencia atual para mandar o ack ou nack
- * @return int 
- */
-int mandaRetorno(int isAck, int soquete, int sequencia)
-{
-    msgT mensagem;
-
-    if (isAck)
-    {
-        initMessage(&mensagem, NULL, 0, ACK, sequencia, 0);
-    }
-    else
-    {
-        initMessage(&mensagem, NULL, 0, NACK, sequencia, 0);
-    }
-
-    if (!sendMessage(soquete, &mensagem))
-    {
-        perror("Erro ao enviar mensagem de retorno");
-        return -1;
-    }
-    else
-    {
-        if (isAck)
-            printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d \n", sequencia);
-        else
-            printf("MANDEI RETORNO DE NACK : %d \n", sequencia);
-    }
-    return 0;
-}
-
 /**********************ERROR*****************************************************************************************/
-
 void getNextState(typesState curState, unsigned int receivedBit, tNode *nextNode)
 {
     // CHECK WHAT IS THE CURRENT STATES
@@ -203,11 +166,9 @@ bit *viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned in
     // free_binary_tree(pathRoot);
     return decodedMessage;
 }
-
 /**********************END_ERROR*****************************************************************************************/
 
 /**********************GENERATE_MESSAGE**********************************************************************************/
-
 /** TRELLIS ENCODING **/
 void trellisShift(bit *trellis, bit newBit)
 {
@@ -257,15 +218,6 @@ bit calculaParidade(bit *conteudo, unsigned int tam)
     return aux;
 }
 
-/**
- * @brief Função para inicialização da mensagem
- * 
- * @param mensagem - Mensagem que recebe a inicialização
- * @param originalMessage - Mensagem original em binário, que vai efetuar o encode pela treliça
- * @param size - Tamanho da mensagem original
- * @param msgType - Tipo da mensagem
- * @param sequencia - Sequencia atual da mensagem
- */
 void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode)
 {
     if (originalMessage != NULL && shouldEncode)
@@ -284,11 +236,9 @@ void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesM
     mensagem->tipo = msgType;
     mensagem->sequencia = sequencia;
 }
-
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
 
 /**********************LIST**************************************************************************************************/
-
 void insertfirst(tNode *element, tListNode **head)
 {
     tListNode *New;
@@ -298,7 +248,6 @@ void insertfirst(tNode *element, tListNode **head)
     (*head) = New;
 }
 
-/* Function to delete the entire linked list */
 void deleteList(tListNode **head_ref)
 {
     /* deref head_ref to get the real head */
@@ -358,11 +307,9 @@ void prnList(tListNode *head)
 
     printf("\n");
 }
-
 /**********************END_LIST**************************************************************************************************/
 
 /**********************BINARY_TREE*******************************************************************************************/
-
 void copyPathAggregatedMessage(bit *prevPathMess, bit *levelMessage, bit *pathAggMess, unsigned int level, unsigned int packetSize)
 {
     for (int i = 0; i < (packetSize * level - 1); ++i)
@@ -398,7 +345,6 @@ void free_binary_tree(tNode *root)
     free(root);
 }
 
-/****/
 unsigned int countNodes(tNode *n)
 {
     if (n != NULL)
@@ -419,7 +365,6 @@ void emordem(tNode *no)
     }
 }
 
-/* Function to print level order traversal a tree*/
 void printLevelOrder(tNode *root)
 {
     int h = height(root);
@@ -480,7 +425,6 @@ void getListLeafsHannigPathDistance(tNode *root, int level, unsigned int packetS
     }
 }
 
-/* Print nodes at a current level */
 void printCurrentLevel(tNode *root, int level)
 {
     if (root == NULL)
@@ -516,7 +460,6 @@ void printCurrentLevel(tNode *root, int level)
         printCurrentLevel(root->right, level - 1);
     }
 }
-/****/
 
 void getFullMessageDecoded(tNode *leaf)
 {
@@ -528,7 +471,7 @@ void getFullMessageDecoded(tNode *leaf)
         getFullMessageDecoded(leaf->parent);
     }
 }
-/****/
+
 unsigned int height(tNode *p)
 {
     int he, hd;
@@ -541,18 +484,9 @@ unsigned int height(tNode *p)
     else
         return hd + 1;
 }
-
 /**********************END_BINARY_TREE*******************************************************************************************/
 
 /**********************UTILS*****************************************************************************************************/
-
-/**
- * @brief Função para envio da mensagem, em caso de erro no envio retorna 0
- * 
- * @param soquete 
- * @param mensagem 
- * @return int 
- */
 int sendMessage(int soquete, msgT *mensagem)
 {
     if (send(soquete, mensagem, sizeof(msgT), 0) < 0)
@@ -609,7 +543,6 @@ int ConexaoRawSocket(char *device)
     return soquete;
 }
 
-/**********************END_UTILS*****************************************************************************************************/
 void incrementaSequencia()
 {
     if (sequencia_global < 8)
@@ -618,15 +551,6 @@ void incrementaSequencia()
         sequencia_global = 0;
 }
 
-/**
- * @brief Função para receber a mensagem
- * 
- * @param soquete 
- * @param mensagem - mensagem que vai receber a mensagem
- * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
- * @param sequencia_atual - Sequencia atual esperada pela função
- *  @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
- */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual)
 {
     while (1)
@@ -661,6 +585,33 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
 
 }
 
+int mandaRetorno(int isAck, int soquete, int sequencia)
+{
+    msgT mensagem;
+
+    if (isAck)
+    {
+        initMessage(&mensagem, NULL, 0, ACK, sequencia, 0);
+    }
+    else
+    {
+        initMessage(&mensagem, NULL, 0, NACK, sequencia, 0);
+    }
+
+    if (!sendMessage(soquete, &mensagem))
+    {
+        perror("Erro ao enviar mensagem de retorno");
+        return -1;
+    }
+    else
+    {
+        if (isAck)
+            printf("MANDEI RETORNO DE ACK PARA SEQUENCIA: %d \n", sequencia);
+        else
+            printf("MANDEI RETORNO DE NACK : %d \n", sequencia);
+    }
+    return 0;
+}
 
 FILE *openFile(unsigned char *filename, char *mode)
 {
@@ -672,3 +623,4 @@ FILE *openFile(unsigned char *filename, char *mode)
     }
     return fp;
 }
+/**********************END_UTILS*****************************************************************************************************/

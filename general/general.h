@@ -104,12 +104,7 @@ typedef struct packet
     bit data[TAM_BUF];
 } Packet;
 
-int mandaRetorno(int isAck, int soquete, int sequencia);
-
 /**********************ERROR*****************************************************************************************/
-
-bit *viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned int msgSize);
-
 /**
  * @brief Get the next state object
  * PATH DIAGRAM ACCORDING IF RECEIVED 0 OR 1
@@ -124,51 +119,117 @@ bit *viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned in
  */
 void getNextState(typesState curState, unsigned int receivedBit, tNode *nextNode);
 
+unsigned int calcHanningDistance(bit *receivedPacketMessage, bit *correctedPacketMessage, unsigned int packageSize);
+
+/** VITERBI ALGORITHM **/
+void updatePathError(tNode *root, unsigned int level, tListNode **auxList, unsigned int height, bit *receivedStepMessage, unsigned int packetSize);
+
+tNode *getMinHanningDistancePathLeaf(tNode *root, unsigned int packetSize);
+
+void cutLeafs(tListNode *head, unsigned int tam);
+
+bit *viterbiAlgorithm(bit *receivedMessage, unsigned int packetSize, unsigned int msgSize);
 /**********************END_ERROR*****************************************************************************************/
 
-/**********************BINARY_TREE*******************************************************************************************/
-
-void free_binary_tree(tNode *root);
-unsigned int countNodes(tNode *n);
-tNode *startNode(unsigned int curPathError, unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode);
-unsigned int height(tNode *p);
-void emordem(tNode *no);
-void printLevelOrder(tNode *root);
-void printCurrentLevel(tNode *root, int level);
-void getNextStep(tNode *root, unsigned int packetSize);
-void getNextLeafOnLevel(tNode *root, int level, unsigned int packetSize, unsigned int height);
-void getListLeafsHannigPathDistance(tNode *root, int level, unsigned int packetSize, unsigned int height, tNode **minHanningDistPathNode);
-void getFullMessageDecoded(tNode *leaf);
-
-/**********************END_BINARY_TREE*******************************************************************************************/
-
 /**********************GENERATE_MESSAGE**********************************************************************************/
+/** TRELLIS ENCODING **/
+void trellisShift(bit *trellis, bit newBit);
+
+bit encodedX1(bit *trellis);
+
+bit encodedX2(bit *trellis); 
+
+void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size);
 
 bit calculaParidade(bit *conteudo, unsigned int tam);
-void trellisEncode(bit *encodedMessage, bit *originalMessage, unsigned int size);
-void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode);
 
+/**
+ * @brief Função para inicialização da mensagem
+ * 
+ * @param mensagem - Mensagem que recebe a inicialização
+ * @param originalMessage - Mensagem original em binário, que vai efetuar o encode pela treliça
+ * @param size - Tamanho da mensagem original
+ * @param msgType - Tipo da mensagem
+ * @param sequencia - Sequencia atual da mensagem
+ */
+void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesMessage msgType, int sequencia, int shouldEncode);
 /**********************END_GENERATE_MESSAGE**********************************************************************************/
 
 /**********************LIST**************************************************************************************************/
-
 void insertfirst(tNode *element, tListNode **head);
-unsigned int listSize(tListNode *head);
-void prnList(tListNode *head);
-bit *getDecodedMessage(tListNode *head, unsigned int decodedMsgSize);
+
+/* Function to delete the entire linked list */
 void deleteList(tListNode **head_ref);
 
+bit *getDecodedMessage(tListNode *head, unsigned int decodedMsgSize);
+
+unsigned int listSize(tListNode *head);
+
+void prnList(tListNode *head);
 /**********************END_LIST**************************************************************************************************/
 
-/**********************UTILS*****************************************************************************************************/
+/**********************BINARY_TREE*******************************************************************************************/
+void copyPathAggregatedMessage(bit *prevPathMess, bit *levelMessage, bit *pathAggMess, unsigned int level, unsigned int packetSize);
 
+tNode *startNode(unsigned int curPathError, unsigned int inputBit, typesState curState, unsigned int level, unsigned int packetSize, tNode *parentNode);
+
+void free_binary_tree(tNode *root);
+
+unsigned int countNodes(tNode *n);
+
+void emordem(tNode *no);
+
+/* Function to print level order traversal a tree*/
+void printLevelOrder(tNode *root);
+
+void getNextStep(tNode *root, unsigned int packetSize);
+
+void getNextLeafOnLevel(tNode *root, int level, unsigned int packetSize, unsigned int height);
+
+void getListLeafsHannigPathDistance(tNode *root, int level, unsigned int packetSize, unsigned int height, tNode **minHanningDistPathNode);
+
+/* Print nodes at a current level */
+void printCurrentLevel(tNode *root, int level);
+
+void getFullMessageDecoded(tNode *leaf);
+
+unsigned int height(tNode *p);
+/**********************END_BINARY_TREE*******************************************************************************************/
+
+/**********************UTILS*****************************************************************************************************/
+/**
+ * @brief Função para envio da mensagem, em caso de erro no envio retorna 0
+ * 
+ * @param soquete 
+ * @param mensagem 
+ * @return int 
+ */
 int sendMessage(int soquete, msgT *mensagem);
+
 int ConexaoRawSocket(char *device);
+
 void incrementaSequencia();
 
-/**********************END_UTILS*****************************************************************************************************/
-
+/**
+ * @brief Função para receber a mensagem
+ * 
+ * @param soquete 
+ * @param mensagem - mensagem que vai receber a mensagem
+ * @param timeout - Se o timeout esta ligado, sendo que não deve ocorrer timeout antes que receba a mensagem de inicio
+ * @param sequencia_atual - Sequencia atual esperada pela função
+ *  @return int - 2 = timeout, 1= ok, 0 = erro no recebimento 
+ */
 int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int sequencia_atual);
+
+/**
+ * @brief Função para que seja efetuado o retorno de ACK/NACK da mensagem recebida
+ * 
+ * @param isAck - Se eh um ack (1 ou 0)
+ * @param soquete - Socket
+ * @param sequencia - Sequencia atual para mandar o ack ou nack
+ * @return int 
+ */
+int mandaRetorno(int isAck, int soquete, int sequencia);
 
 /**
  * @brief Open a file and return a pointer to the file
@@ -177,5 +238,5 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
  * @return FILE Object
  **/
 FILE *openFile(unsigned char *filename, char *mode);
-
+/**********************END_UTILS*****************************************************************************************************/
 #endif

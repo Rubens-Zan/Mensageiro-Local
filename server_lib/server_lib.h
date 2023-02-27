@@ -24,27 +24,49 @@ typedef struct tServer
 } tServer;
 
 /**
+ * @brief - Função para a conversão de um número em binário em decimal
+ * @param binary - String de bits para conversão
+ * @param tam  - Tamanho da string
+ * @return int
+ */
+int binaryToDecimal(unsigned char *binary, unsigned int tam);
+
+/**
+ * @brief - Função que converte o binário da mensagem recebida em unsigned char
+ *
+ * @param msg - Binário da mensagem sequencia recebido
+ * @param size - Tamanho da mensagem nessa sequencia recebido
+ * @param sequenciaAtual - Sequência atual da mensagem, para saber a quantidade de bits já recebidos
+ * @param fullMessage - Array que recebe toda a mensagem das transmissões
+ */
+void printOriginalMessage(bit *msg, unsigned int size, unsigned int sequenciaAtual, unsigned int *fullMessage);
+
+/**
  * @brief Função para receber a primeira mensagem no servidor em loop
- * @param soquete
- * @param mensagem - Mensagem que vai receber
+ * @param server
  */
 void recebeMensagemServerLoop(tServer *server);
 
 /**
  * @brief - Função para efetuar o recebimento da mensagem de texto
  *
- * @param server - Holds all the content to be received
+ * @param server
  */
 void recebeMensagemTexto(tServer *server); 
 
 /**
  *
- * @brief - Função para recebimento de arquivos
+ * @brief - Função para recebimento de arquivos em Janela Desizante VoltaN
  *
  * @param server - Holds all the content to be received
  */
 void recebeMensagemArquivo(tServer *server);
 
+/**
+ *
+ * @brief - Função para recebimento de arquivos em Para-Espera
+ *
+ * @param server - Holds all the content to be received
+ */
 void recebeMensagemArquivo_PARAESPERA(tServer *server); 
-
 #endif

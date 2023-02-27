@@ -1,11 +1,5 @@
 #include "./server_lib.h"
 
-/**
- * @brief - Função para a conversão de um número em binário em decimal
- * @param binary - String de bits para conversão
- * @param tam  - Tamanho da string
- * @return int
- */
 int binaryToDecimal(unsigned char *binary, unsigned int tam)
 {
     int decimal = 0, i = 0;
@@ -20,14 +14,6 @@ int binaryToDecimal(unsigned char *binary, unsigned int tam)
     return decimal;
 }
 
-/**
- * @brief - Função que converte o binário da mensagem recebida em unsigned char
- *
- * @param msg - Binário da mensagem sequencia recebido
- * @param size - Tamanho da mensagem nessa sequencia recebido
- * @param sequenciaAtual - Sequência atual da mensagem, para saber a quantidade de bits já recebidos
- * @param fullMessage - Array que recebe toda a mensagem das transmissões
- */
 void printOriginalMessage(bit *msg, unsigned int size, unsigned int sequenciaAtual, unsigned int *fullMessage)
 {
     wint_t originalMessage[BUFFER_GIGANTE];
@@ -46,12 +32,6 @@ void printOriginalMessage(bit *msg, unsigned int size, unsigned int sequenciaAtu
     printf("Mensagem recebida: %ls sequência: %d", originalMessage, sequenciaAtual);
 }
 
-/**
- * @brief Função para receber a primeira mensagem no servidor em loop
- * @param soquete
- * @param mensagem - Mensagem que vai receber
- * @return int
- */
 void recebeMensagemServerLoop(tServer *server)
 {
     msgT mensagemInit;
@@ -117,12 +97,6 @@ void recebeMensagemServerLoop(tServer *server)
     }
 }
 
-/**
- * @brief - Função para efetuar o recebimento da mensagem de texto
- *
- * @param soquete
- * @param mensagem
- */
 void recebeMensagemTexto(tServer *server)
 {
     msgT mensagemTxt;
@@ -205,6 +179,7 @@ void recebeMensagemTexto(tServer *server)
         }
     }
 }
+
 void recebeMensagemArquivo(tServer *server)
 {
     printf("----> Receive media ACTIVATED <----\n"); // Function init
