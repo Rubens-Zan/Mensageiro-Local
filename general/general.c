@@ -253,6 +253,7 @@ void initMessage(msgT *mensagem, bit *originalMessage, unsigned int size, typesM
 {
     if (originalMessage != NULL)
     {
+        memset(mensagem->dados, 0, TAM_MAX_DADOS); 
         trellisEncode(mensagem->dados, originalMessage, size);
         mensagem->paridade = calculaParidade(mensagem->dados, size * 2);
     }
@@ -604,8 +605,6 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
         // cuida do timeout
 
         struct pollfd fds;
-
-
         fds.fd = soquete;
         fds.events = POLLIN;
 
@@ -626,7 +625,6 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
         else if (mensagem->sequencia == sequencia_atual){
         // else if (mensagem->sequencia == sequencia_atual){
             break;
-            
         }
     }
 

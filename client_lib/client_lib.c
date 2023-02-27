@@ -2,7 +2,10 @@
 #include <time.h>
 
 #define PACKET_SIZE 2
-#define AVAILABLE_UNS_CHARS_PER_MSG (TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
+// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(TAM_MAX_DADOS / (PACKET_SIZE * 8)) // SINCE ONE UNSIGNED CHAR WILL BE CONVERTED TO 8 BITS
+
+// #define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(10) // PARA MOSTRAR SEM ERROS 
+#define AVAILABLE_UNS_CHARS_PER_MSG (unsigned int)(16) // PARA MOSTRAR OS REENVIOS DE MENSAGEM NA MENSAGEM DE TEXTO 
 
 unsigned int getNextPressedChar()
 {
@@ -169,7 +172,7 @@ void state_create_message(int soquete, tCliente *client)
             printf("\n");
             #endif
             
-            printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / 16);
+            printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG);
             // 000001 = TEXTO
             initMessage(&mensagem,  "000001",6, INIT, 1);
 
@@ -192,6 +195,7 @@ void state_create_message(int soquete, tCliente *client)
                             break;
                         case TIMEOUT:
                             ack = 1;
+                            printf("TIMEOUT DESISTO!!");
                             client->estado = INICIO;
                             return; 
                     }
@@ -203,8 +207,8 @@ void state_create_message(int soquete, tCliente *client)
                 unsigned int sentChars = (sequenciaAtual-1) * AVAILABLE_UNS_CHARS_PER_MSG;
                 unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
                 bit mensagemEmBits[TAM_MAX_DADOS];
-                
-                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+                memset(mensagemEmBits,0, TAM_MAX_DADOS);
+                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
                 // auxString[uCharsInMessage] = '\0';
                 sequenciaAtual+=1;
                 remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
@@ -216,7 +220,7 @@ void state_create_message(int soquete, tCliente *client)
                     time_t t;
                     time(&t);
 
-                    printf("%s Mensagem: '%ls ' sequência: %d enviada!", ctime(&t),auxString, mensagem.sequencia);
+                    printf("%s Mensagem: '%ls' sequência: %d enviada!", ctime(&t),auxString, mensagem.sequencia);
                 }
                 else
                 {
@@ -226,6 +230,21 @@ void state_create_message(int soquete, tCliente *client)
                 
             } 
             
+            int ack = 0;
+            while (!ack){
+                int contador = 0;
+                switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
+                {
+                    case ACK:
+                        ack = 1;
+                        break;
+                    case TIMEOUT:
+                        ack = 1;
+                        printf("TIMEOUT!!");
+                        client->estado = INICIO;
+                        return; 
+                }
+            }
             // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
             initMessage(&mensagem,  NULL,0, END, sequenciaAtual+1);
             if (sendMessage(client->socket, &mensagem))
@@ -430,8 +449,10 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
             // se for um NACK, reenvia a mensagem
             if ((mensagem_aux.tipo == NACK) || (retorno_func == TIMEOUT_RETURN))
             {
-                if (retorno_func == TIMEOUT_RETURN)
+                if (retorno_func == TIMEOUT_RETURN){
                     printf("> Timeout!!\n");
+                    (*contador)++;
+                }
 
                 // Se o contador de timeout ja foi no maximo de tentativas, retorna timeout
                 if (*contador >= MAX_TENTATIVAS)
@@ -446,17 +467,14 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                     (*contador)++;
                 }
 
-                // printf("Remandando o seguinte:\n");
-                // imprime_mensagem(&mensagem_aux);
-                // printf("\n");
-
+                // Remanda a mensagem 
                 if (!sendMessage(soquete, mensagem))
                 {
                     printf("> Erro ao re-mandar mensagem no recebe_retorno\n");
                 }
                 else
                 {
-                    printf("> Reenviei a mensagem\n");
+                    printf("> Reenviei a mensagem: %d\n", mensagem->sequencia);
                 }
             }
 
@@ -465,17 +483,13 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
             {
                 if ((unsigned int)mensagem_aux.tipo == ACK)
                 {
-                    printf("ack %d\n", mensagem_aux.sequencia);
+                    printf("RECEBI RETORNO DE ACK: %d\n", mensagem_aux.sequencia);
                     return (unsigned int)mensagem_aux.tipo;
                 }
                 else if ((unsigned int)mensagem_aux.tipo == NACK)
                 {
-                    printf("Nack %d\n", mensagem_aux.sequencia);
+                    printf("RECEBI RETORNO DE NACK %d\n", mensagem_aux.sequencia);
                     return (unsigned int)mensagem_aux.tipo;
-                }
-                else
-                {
-                    printf("nao sei oq eh isso %d", mensagem_aux.tipo);
                 }
             }
         }
