@@ -99,7 +99,7 @@ struct tListNode
 typedef struct packet
 {
     unsigned int seq_num : 4;
-    bit data[1024];
+    bit data[TAM_BUF];
 } Packet;
 
 int mandaRetorno(int isAck, int soquete, int sequencia);

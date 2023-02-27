@@ -344,7 +344,7 @@ int state_send_file(int soquete, tCliente *client)
             break;
         case TIMEOUT:
             ack = 1;
-            // printf("TIMEOUT!!");
+            printf("TIMEOUT!!");
             client->estado = INICIO;
             return -1; // retorna erro ? verificar
         }
@@ -466,6 +466,12 @@ int state_send_file(int soquete, tCliente *client)
                     printf("=> Window size is %d", window_size);
                 }
             }
+        }
+
+        for (int i = 0; i < original_window_size; ++i)
+        {
+            printf("=> Reseting window at index %d\n", i);
+            memset(window[i].data, 0, TAM_BUF); // Reset buffer with 0;
         }
 
         printf("=> Reseting packet\n");

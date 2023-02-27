@@ -292,7 +292,7 @@ void recebeMensagemArquivo(tServer *server)
         }
 
         Packet packet;
-        int recv_size = recv(server->socket, &packet, sizeof(Packet), 0);
+        int recv_size = recv(server->socket, &packet, sizeof(packet), 0);
         if (recv_size == -1) // Error on recv
         { 
             perror("> Error receiving packet\n");
@@ -309,7 +309,7 @@ void recebeMensagemArquivo(tServer *server)
         if (packet.seq_num <= base + window_size)
         {
             // Write data to file
-            int bytes_written = fwrite(packet.data, sizeof(bit), TAM_BUF, file);
+            int bytes_written = fwrite(packet.data, sizeof(bit), sizeof(packet), file);
             if (bytes_written != sizeof(packet.data))
             {
                 printf("> Bytes written does not match with packet data size\n");
