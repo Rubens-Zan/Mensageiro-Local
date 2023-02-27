@@ -1,8 +1,8 @@
 #include "./client_lib.h"
 
 /**
- * @brief Get the Next Pressed Unsigned Char object 
- * @return unsigned int 
+ * @brief Get the Next Pressed Unsigned Char object
+ * @return unsigned int
  */
 unsigned int getNextPressedChar()
 {
@@ -23,7 +23,7 @@ unsigned int getNextPressedChar()
     return wch;
 }
 
-void getFileName(char *filename_c)
+unsigned int getFileName(unsigned int *filename_c)
 {
     struct termios original_attributes;
     tcgetattr(STDIN_FILENO, &original_attributes);
@@ -39,7 +39,7 @@ void getFileName(char *filename_c)
     printf("\nINPUT FILE: ");
     while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n')
     {
-        printf("%c", c);
+        printf("%lc", c);
         filename_c[i] = c;
         ++i;
     }
@@ -47,14 +47,15 @@ void getFileName(char *filename_c)
 
     // Restore the terminal's original attributes
     tcsetattr(STDIN_FILENO, TCSANOW, &original_attributes);
+    return i;
 }
 
 /**
  * @brief Função para conversão de um número em binário,
  * já faz o append no início no número em binário conforme o bitsSize esperado
  * @param num - Numero a ser convertido
- * @param bitsSize - Quantidade de bits esperados no binario, para append no caracteres para UTF-8 
- * @return bit* 
+ * @param bitsSize - Quantidade de bits esperados no binario, para append no caracteres para UTF-8
+ * @return bit*
  */
 bit *convertToBin(unsigned int num, unsigned int bitsSize)
 {
@@ -82,7 +83,7 @@ bit *convertToBin(unsigned int num, unsigned int bitsSize)
 
 /**
  * @brief Get the String As Binary convertind the raw UF-8 message to binary
- * 
+ *
  * @param messageS - Array de bits que recebe a string uf8 em binario conforme conversão
  * @param s  - Array contendo os caracteres em utf-8
  * @param tam - Tamanho do array de caracteres
@@ -112,13 +113,13 @@ void getStringAsBinary(bit *messageS, unsigned int *s, unsigned int tam, unsigne
  *  i: Inicia a criação de uma mensagem. Enter para enviar.
  *  s: Envia arquivo x.
  *  q: Sai do programa.
- * @param client 
+ * @param client
  */
 void state_init(tCliente *client)
 {
 
     char buffer_c[100];
-    char filename_c[50];
+    unsigned int filename_c[50];
     char char_code;
 
     while (1)
@@ -145,9 +146,9 @@ void state_init(tCliente *client)
         else if (char_code == 's' || char_code == 'S')
         {
             printf("> SEND:");
-            getFileName(filename_c);
+            client->fileNameSize = getFileName(filename_c);
             client->estado = ENVIA_ARQUIVO;
-            strcpy(client->fileName, filename_c);
+            memcpy(client->fileName, filename_c, client->fileNameSize * sizeof(unsigned int) );
             return;
         }
         else
@@ -160,18 +161,18 @@ void state_init(tCliente *client)
 /**
  * @brief - Função para criação/envio da mensagem
  * Cria a mensagem recebendo o proximo caracter em UTF-8
- * ENTER: envia a mensagem  
- * ESC: faz com que o estado do cliente volte ao estado inicial 
- * @param soquete 
- * @param client 
+ * ENTER: envia a mensagem
+ * ESC: faz com que o estado do cliente volte ao estado inicial
+ * @param soquete
+ * @param client
  */
 void state_create_message(int soquete, tCliente *client)
 {
     unsigned int char_code;
     unsigned int buffer_c[BUFFER_GIGANTE];
     unsigned int totalCharsInBuffer = 0;
-    
-    // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR) 
+
+    // TAM_MAX_DADOS / PACKET_SIZE * SIZEOF(UNSIGNED CHAR)
     while (1)
     {
         char_code = getNextPressedChar();
@@ -185,70 +186,73 @@ void state_create_message(int soquete, tCliente *client)
         {
             msgT mensagem;
 
-            unsigned int sequenciaAtual=1;
+            unsigned int sequenciaAtual = 1;
 
-            // totalCharsInBuffer = Amount of unsigned chars to send 
+            // totalCharsInBuffer = Amount of unsigned chars to send
             int remainingSize = totalCharsInBuffer;
 
-            #ifdef DEBUG
+#ifdef DEBUG
             printf("\n> MENSAGEM A SER ENVIADA: \n");
             for (unsigned int i = 0; i < totalCharsInBuffer; ++i)
                 printf("%d ", buffer_c[i]);
 
             printf("\n");
-            #endif
-            
+#endif
+
             printf("\n> Enviando a mensagem: %ls | separando em %d mensagens \n", buffer_c, (totalCharsInBuffer / AVAILABLE_UNS_CHARS_PER_MSG) + 1);
             // 000001 = TEXTO
-            initMessage(&mensagem,  "000001",6, INIT, 1);
+            initMessage(&mensagem, "000001", 6, INIT, 1);
 
-
-            if (sendMessage(client->socket, &mensagem)){
+            if (sendMessage(client->socket, &mensagem))
+            {
                 printf("> MENSAGEM DE INICIO ENVIADA! \n");
-
-            }else {
+            }
+            else
+            {
                 printf("> MENSAGEM DE INICIO NAO ENVIADA!\n");
             }
 
-            while(remainingSize > 0){
+            while (remainingSize > 0)
+            {
                 int contador = 1;
                 int ack = 0;
-                while (!ack){
+                while (!ack)
+                {
                     switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
                     {
-                        case ACK:
-                            ack = 1;
-                            break;
-                        case TIMEOUT:
-                            ack = 1;
-                            printf("TIMEOUT DESISTO!!");
-                            client->estado = INICIO;
-                            return; 
+                    case ACK:
+                        ack = 1;
+                        break;
+                    case TIMEOUT:
+                        ack = 1;
+                        printf("TIMEOUT DESISTO!!");
+                        client->estado = INICIO;
+                        return;
                     }
                 }
 
-
                 unsigned int auxString[AVAILABLE_UNS_CHARS_PER_MSG + 1];
-                memset(auxString,0, AVAILABLE_UNS_CHARS_PER_MSG + 1); 
-                unsigned int sentChars = (sequenciaAtual-1) * AVAILABLE_UNS_CHARS_PER_MSG;
+                memset(auxString, 0, AVAILABLE_UNS_CHARS_PER_MSG + 1);
+                unsigned int sentChars = (sequenciaAtual - 1) * AVAILABLE_UNS_CHARS_PER_MSG;
                 unsigned int uCharsInMessage = (remainingSize < AVAILABLE_UNS_CHARS_PER_MSG) ? remainingSize : AVAILABLE_UNS_CHARS_PER_MSG;
                 bit mensagemEmBits[TAM_MAX_DADOS];
-                memset(mensagemEmBits,0, TAM_MAX_DADOS);
-                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); //TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
+                memset(mensagemEmBits, 0, TAM_MAX_DADOS);
+                memcpy(auxString, buffer_c + sentChars, uCharsInMessage * sizeof(unsigned int)); // TODO COPIAR PARA AUXSTRING A PARTIR DA POS DA ULTIMA COPIADA
                 // auxString[uCharsInMessage] = '\0';
-                sequenciaAtual+=1;
-                remainingSize-= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice 
+                sequenciaAtual += 1;
+                remainingSize -= AVAILABLE_UNS_CHARS_PER_MSG; // TAM_MAX_DADOS bits per message / 8 bits per char / 2 bits because of trelice
 
                 getStringAsBinary(mensagemEmBits, auxString, uCharsInMessage, UTF8CHARSIZE);
                 initMessage(&mensagem, mensagemEmBits, uCharsInMessage * UTF8CHARSIZE, TEXTO, sequenciaAtual);
 
-                if (sendMessage(client->socket, &mensagem)){
+                if (sendMessage(client->socket, &mensagem))
+                {
                     time_t t;
                     time(&t);
 
-                    printf("%s Mensagem: ", ctime(&t) );
-                    for (unsigned int k=0;k < uCharsInMessage;++k)
-                        printf("%lc",auxString[k]);
+                    printf("%s Mensagem: ", ctime(&t));
+                    for (unsigned int k = 0; k < uCharsInMessage; ++k)
+                        printf("%lc", auxString[k]);
 
                     printf(" sequência: %d enviada! \n", mensagem.sequencia);
                 }
@@ -256,30 +260,30 @@ void state_create_message(int soquete, tCliente *client)
                 {
                     printf("=> Mensagem não enviada!\n");
                 }
+            }
 
-                
-            } 
-            
             int ack = 0;
-            while (!ack){
+            while (!ack)
+            {
                 int contador = 0;
                 switch (recebeRetorno(client->socket, &mensagem, &contador, sequenciaAtual))
                 {
-                    case ACK:
-                        ack = 1;
-                        break;
-                    case TIMEOUT:
-                        ack = 1;
-                        printf("TIMEOUT!!");
-                        client->estado = INICIO;
-                        return; 
+                case ACK:
+                    ack = 1;
+                    break;
+                case TIMEOUT:
+                    ack = 1;
+                    printf("TIMEOUT!!");
+                    client->estado = INICIO;
+                    return;
                 }
             }
             // Manda a mensagem de fim de transmissao apos nao sobrar tamanho a ser enviado
-            initMessage(&mensagem,  NULL,0, END, sequenciaAtual+1);
+            initMessage(&mensagem, NULL, 0, END, sequenciaAtual + 1);
             if (sendMessage(client->socket, &mensagem))
                 printf("> MENSAGEM DE FIM ENVIADA!\n");
-            else {
+            else
+            {
                 printf("> MENSAGEM DE FIM NAO ENVIADA! \n");
             }
 
@@ -299,50 +303,64 @@ void state_create_message(int soquete, tCliente *client)
 int state_send_file(int soquete, tCliente *client)
 {
     // File opening
-    FILE *file = openFile(client->fileName, "rb");
+    char nomeDoArquivo[TAM_BUF]; 
+
+    for (unsigned int i=0;i < client->fileNameSize;++i){
+        nomeDoArquivo[i] = (char)client->fileName[i];
+    }
+
+    FILE *file = openFile( nomeDoArquivo, "rb");
     if (file == NULL)
     {
-        printf("File not opened, try again, %s \n",client->fileName);
-       exit(1);
+        printf("File not opened, try again, %s \n", nomeDoArquivo);
+        exit(1);
     }
-    printf("\n=> FILE to be sent: %s\n", client->fileName);
+    printf("\n=> FILE to be sent: %s\n", nomeDoArquivo);
     int seqAtual = 1;
     // Send message of Initialization
     msgT ini_message;
-    initMessage(&ini_message, "010000", 6, INIT, seqAtual); // envia a mensagem inicial 
+    initMessage(&ini_message, "010000", 6, INIT, seqAtual); // envia a mensagem inicial
     int ack = 0;
-    // INICIALIZAÇÃO, DEVO RECEBER DOIS ACK, UM PARA O INICIO DA TRANSMISSÃO E UM PARA O NOME DO ARQUIVO    
-    while (ack != 2){
+    // INICIALIZAÇÃO, DEVO RECEBER DOIS ACK, UM PARA O INICIO DA TRANSMISSÃO E UM PARA O NOME DO ARQUIVO
+    while (ack != 2)
+    {
         int contador = 0;
         switch (recebeRetorno(client->socket, &ini_message, &contador, seqAtual))
         {
-            case ACK:
-                ++ack;
-                ++seqAtual; // seqatual = 2
-                // RECEBI ACK DA INICIALIZAÇÃO DA TRANSMISSÃO, ENTÃO VOU ENVIAR A MENSAGEM COM NOME DO ARQUIVO
-                bit mensagemEmBits[TAM_MAX_DADOS];
-                getStringAsBinary(mensagemEmBits, client->fileName, strlen(client->fileName), UTF8CHARSIZE);
-                initMessage(&ini_message, mensagemEmBits, strlen(client->fileName) * UTF8CHARSIZE, TEXTO, seqAtual);
-                break;
-            case TIMEOUT:
-                ack = 1;
-                printf("TIMEOUT!!");
-                client->estado = INICIO;
-                return; 
+        case ACK:
+            ++ack;
+            ++seqAtual; // seqatual = 2
+            // RECEBI ACK DA INICIALIZAÇÃO DA TRANSMISSÃO, ENTÃO VOU ENVIAR A MENSAGEM COM NOME DO ARQUIVO
+            bit mensagemEmBits[TAM_MAX_DADOS];
+            getStringAsBinary(mensagemEmBits, client->fileName, client->fileNameSize, UTF8CHARSIZE);
+            initMessage(&ini_message, mensagemEmBits, client->fileNameSize * UTF8CHARSIZE, TEXTO, seqAtual);
+            if (sendMessage(client->socket, &ini_message))
+                printf("> MENSAGEM DE NOME DO ARQUIVO ENVIADA!\n");
+            else
+            {
+                printf("> MENSAGEM DE NOME DO ARQUIVO NAO ENVIADA! \n");
+            }
+            break;
+        case TIMEOUT:
+            ack = 1;
+            printf("TIMEOUT!!");
+            client->estado = INICIO;
+            return -1; // retorna erro ? verificar
         }
     }
 
-    char buffer[1024];
-    // Copiar a string para o buffer
-    memcpy(buffer, client->fileName, strlen(client->fileName));
-    int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
-    // Sent filename
-    if (bytes_sent < 0)
-    {
-        perror("> Dentro do send filename, Erro ao enviar mensagem");
-        exit(1);
-    }
-    printf("=> Filename sent successfully.\n");
+    // SENT FILENAME
+    // bit buffer[1024];
+    // // Copiar a string para o buffer
+    // memcpy(buffer, client->fileName, strlen(client->fileName));
+    // int bytes_sent = send(soquete, buffer, strlen(client->fileName), 0);
+    // // Sent filename
+    // if (bytes_sent < 0)
+    // {
+    //     perror("> Dentro do send filename, Erro ao enviar mensagem");
+    //     exit(1);
+    // }
+    // printf("=> Filename sent successfully.\n");
 
     int window_size = 3; // Size of Sliding Window
     int original_window_size = window_size;
@@ -454,7 +472,7 @@ int state_send_file(int soquete, tCliente *client)
 
     // Envia mensagem do tipo FIM
     msgT *end_message;
-    initMessage(end_message, NULL, 0, END, seq_num);
+    initMessage(end_message, NULL, 6, END, seq_num);
     if (!sendMessage(soquete, end_message))
     {
         perror("> Erro ao enviar mensagem de Fim de Transmissão\n");
@@ -509,9 +527,9 @@ void state_end(tCliente *client)
  * Conforme o retorno de TIMEOUT a função que chamou lida, podendo desistir de mandar a mensagem e retornar o cliente ao estado inicial
  * @param soquete - Socket do cliente
  * @param mensagem - Mensagem enviada, para caso seja neccessario efetuar o reenvio da mensagem
- * @param contador - Ponteiro para o contador de erros(NACK ou TIMEOUT), inicializar com 1 
+ * @param contador - Ponteiro para o contador de erros(NACK ou TIMEOUT), inicializar com 1
  * @param seqAtual - Sequencia atual da mensagem na transmissão
- * @return typesMessage 
+ * @return typesMessage
  */
 typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAtual)
 {
@@ -533,7 +551,8 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
             // se for um NACK, reenvia a mensagem
             if ((mensagem_aux.tipo == NACK) || (retorno_func == TIMEOUT_RETURN))
             {
-                if (retorno_func == TIMEOUT_RETURN){
+                if (retorno_func == TIMEOUT_RETURN)
+                {
                     printf("> Timeout!!\n");
                     (*contador)++;
                 }
@@ -552,7 +571,7 @@ typesMessage recebeRetorno(int soquete, msgT *mensagem, int *contador, int seqAt
                     (*contador)++;
                 }
 
-                // Remanda a mensagem 
+                // Remanda a mensagem
                 if (!sendMessage(soquete, mensagem))
                 {
                     printf("> Erro ao re-mandar mensagem no recebe_retorno\n");

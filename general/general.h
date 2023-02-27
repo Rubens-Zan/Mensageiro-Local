@@ -174,6 +174,6 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
  * @param mode -> Mode of opening the file
  * @return FILE Object
  **/
-FILE *openFile(char *filename, char *mode); 
+FILE *openFile(unsigned char *filename, char *mode);
 
 #endif

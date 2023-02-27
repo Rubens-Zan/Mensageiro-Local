@@ -199,14 +199,14 @@ void recebeMensagemArquivo(tServer *server)
     int fileNameReceived = 0;
     msgT mensagemInit;
     mensagemInit.sequencia = -1;
-    unsigned int filename[50]
+    unsigned int filename[BUFFER_GIGANTE];
     unsigned int tentativasReceberNome = 0;
 
     while (!fileNameReceived)
     {
         int retorno_func = recebe_mensagem(server->socket, &mensagemInit, 1, 2);
         
-        if (qtErros > MAX_TENTATIVAS){
+        if (tentativasReceberNome > MAX_TENTATIVAS){
             printf("MUITOS ERROS NAS TENTATIVAS, ESTOU RETORNANDO AO INICIO");
             server->estado = INICIO_RECEBIMENTO;
         }
@@ -224,12 +224,27 @@ void recebeMensagemArquivo(tServer *server)
             continue;
         }
         
-        bit *decodedMessage = viterbiAlgorithm(mensagemTxt.dados, PACKET_SIZE, mensagemTxt.tam_msg);
-        printOriginalMessage(decodedMessage, mensagemTxt.tam_msg / PACKET_SIZE, 0, filename);
-        printf("\n");
-        unsigned int valor = binaryToDecimal(viterbiAlgorithm(mensagemInit.dados, PACKET_SIZE, mensagemInit.tam_msg), mensagemInit.tam_msg / PACKET_SIZE);
+          if (mensagemInit.tipo == TEXTO)
+        {
 
-        fileNameReceived = 1;
+            // efetua verificações e envia nack/ack
+            if (mensagemInit.marc_inicio == MARC_INICIO
+                && (mensagemInit.paridade == (unsigned int)calculaParidade(mensagemInit.dados, mensagemInit.tam_msg) ||
+                mensagemInit.paridade == (unsigned int)calculaParidade(mensagemInit.dados, mensagemInit.tam_msg) - 256 )
+            )
+            {
+                bit *decodedMessage = viterbiAlgorithm(mensagemInit.dados, PACKET_SIZE, mensagemInit.tam_msg);
+
+                printOriginalMessage(decodedMessage, mensagemInit.tam_msg / PACKET_SIZE, 2, filename);
+                printf("\n");
+
+                mandaRetorno(1, server->socket, mensagemInit.sequencia);
+                fileNameReceived = 1;
+            }else {
+                mandaRetorno(0, server->socket, mensagemInit.sequencia);
+            }
+        }
+
     }
   
     // Open the file for writing

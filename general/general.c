@@ -658,12 +658,12 @@ int recebe_mensagem(int soquete, msgT *mensagem, int timeout, unsigned int seque
 }
 
 
-FILE *openFile(char *filename, char *mode)
+FILE *openFile(unsigned char *filename, char *mode)
 {
     FILE *fp = fopen(filename, mode);
     if (fp == NULL)
     {
-        printf("Error opening file %s\n", filename);
+        printf("Error opening file %s \n", filename);
         return NULL;
     }
     return fp;
