@@ -199,7 +199,9 @@ void recebeMensagemArquivo(tServer *server)
     int fileNameReceived = 0;
     msgT mensagemInit;
     mensagemInit.sequencia = -1;
-    unsigned int filename[BUFFER_GIGANTE];
+    unsigned int filename_int[BUFFER_GIGANTE];
+    char nomeDoArquivo[BUFFER_GIGANTE]; 
+
     unsigned int tentativasReceberNome = 0;
 
     while (!fileNameReceived)
@@ -235,9 +237,14 @@ void recebeMensagemArquivo(tServer *server)
             {
                 bit *decodedMessage = viterbiAlgorithm(mensagemInit.dados, PACKET_SIZE, mensagemInit.tam_msg);
 
-                printOriginalMessage(decodedMessage, mensagemInit.tam_msg / PACKET_SIZE, 2, filename);
+                printOriginalMessage(decodedMessage, mensagemInit.tam_msg / PACKET_SIZE, 2, filename_int);
                 printf("\n");
 
+
+                for (unsigned int i=0;i < (mensagemInit.tam_msg / PACKET_SIZE);++i){
+                    nomeDoArquivo[i] = (char)filename_int[i];
+                }
+            
                 mandaRetorno(1, server->socket, mensagemInit.sequencia);
                 fileNameReceived = 1;
             }else {
@@ -246,7 +253,8 @@ void recebeMensagemArquivo(tServer *server)
         }
 
     }
-  
+    printf("NOME DO ARQUIVO: %s \n",nomeDoArquivo);
+
     // Open the file for writing
     char *buffer = "./received.txt";
     FILE *file = fopen(buffer, "wb");
